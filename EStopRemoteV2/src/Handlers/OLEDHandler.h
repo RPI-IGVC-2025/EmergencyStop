@@ -24,7 +24,7 @@ static const unsigned char IMAGE_WARNING[] U8X8_PROGMEM = {0x00,0x00,0x80,0x01,0
 
 static TaskHandle_t OLEDTaskHandler;
 
-void initOLED();
+void OLED_Init();
 bool isOLEDUp();
 
 #endif

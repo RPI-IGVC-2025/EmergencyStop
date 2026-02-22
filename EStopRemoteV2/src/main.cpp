@@ -1,15 +1,16 @@
 #include <Arduino.h>
-
-// put function declarations here:
-int myFunction(int, int);
+#include "System.h"
+#include "Handlers/RadioHandler.h"
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
+  System_Init();
+  Radio_Init();
+  
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+ 
 }
 
 // put function definitions here:

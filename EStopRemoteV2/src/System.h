@@ -3,6 +3,9 @@
 #include <Arduino.h>
 #include <FreeRTOS.h>
 
+void System_Init();
+void SystemLoop(void* pvParameters);
+
 SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
 
 typedef struct SystemState {
@@ -10,8 +13,8 @@ typedef struct SystemState {
   volatile bool isSynced;
   volatile bool isEstopped;
   volatile bool heartbeatActive;
-  volatile uint32_t uptimeSeconds;
-} Packet;
+  volatile unsigned long uptimeSeconds;
+} SystemState;
 
 SystemState state;
 

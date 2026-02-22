@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-#include "Auth.h"
-#include "Packet.h"
+#include "Algos/Auth.h"
+#include "Algos/PacketBuilder.h"
 #include "System.h"
 
 HardwareSerial HC12(1);
@@ -40,14 +40,5 @@ bool getNextFrame(Packet* outPkt) {
 }
 
 void processValidatedPacket(Packet* pkt) {
-    if (!verifyPacket(pkt)) {
-        return;
-    }
-
-    switch (pkt->command) {
-        case 'H':
-            completeHandshake();
-        default:
-            Serial.println("wtf");
-    }
+    
 }
