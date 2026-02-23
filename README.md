@@ -1,4 +1,4 @@
-# EStopRemoteV2
+# RPI IGVC Emergency Stop
 
 ## DISCLAIMER!
 
@@ -6,7 +6,7 @@ This program is NOT intended for life-critical or industrial safety applications
 
 ## Description
 
-EStopRemoteV2 is the second iteration of a lightweight Emergency Stop protocol for RPI's IGVC Emergency Stop. All code has been refactored to be more readable and structured in a set hierarchy. It uses FreeRTOS as a way to multiprocess and leave CPU overhead for important tasks such as sending Emergency Stop packets. This protocol ensures the Emergency Stop works as intended and as fast as possible.
+This is a lightweight Emergency Stop protocol for RPI's IGVC Emergency Stop. All code has been refactored to be more readable and structured in a set hierarchy. It uses FreeRTOS as a way to multiprocess and leave CPU overhead for important tasks such as sending Emergency Stop packets. This protocol ensures the Emergency Stop works as intended and as fast as possible.
 
 ## Software Requirements
 
