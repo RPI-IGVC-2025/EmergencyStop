@@ -6,7 +6,7 @@
 void System_Init();
 void SystemLoop(void* pvParameters);
 
-SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
+extern SemaphoreHandle_t xMutex;
 
 typedef struct SystemState {
   volatile uint32_t batteryMv;
@@ -14,8 +14,9 @@ typedef struct SystemState {
   volatile bool isEstopped;
   volatile bool heartbeatActive;
   volatile unsigned long uptimeSeconds;
+  volatile bool OLEDActive;
 } SystemState;
 
-SystemState state;
+extern SystemState state;
 
 #endif

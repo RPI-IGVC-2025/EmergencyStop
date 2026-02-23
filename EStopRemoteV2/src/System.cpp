@@ -4,6 +4,17 @@
 
 static TaskHandle_t SystemTask;
 
+SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
+
+SystemState state = {
+    .batteryMv = 0, // Start fully charged
+    .isSynced = false,
+    .isEstopped = false,
+    .heartbeatActive = false,
+    .uptimeSeconds = 0,
+    .OLEDActive = false
+};
+
 void System_Init() {
     xTaskCreatePinnedToCore(
         SystemLoop, /* Task function. */
@@ -21,7 +32,7 @@ void SystemLoop(void* pvParameters) {
         state.uptimeSeconds++;
 
         // Simulate battery drain
-        ///state.batteryMv = max(0, (int)state.batteryMv - 1);
+        state.batteryMv = 9000 - (state.uptimeSeconds * 5); // Drain 5mV per 1 seconds
 
         vTaskDelay(pdMS_TO_TICKS(1000)); // Delay for 1 second
     }

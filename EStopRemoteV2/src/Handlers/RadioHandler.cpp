@@ -11,7 +11,7 @@ HardwareSerial HC12(1);
 const int hc12_rx = 18;
 const int hc12_tx = 17;
 
-void initRadio() {
+void Radio_Init() {
     HC12.begin(9600, SERIAL_8N1, hc12_rx, hc12_tx);
 }
 
@@ -40,5 +40,22 @@ bool getNextFrame(Packet* outPkt) {
 }
 
 void processValidatedPacket(Packet* pkt) {
-    
+    if (!verifyPacket(pkt)) {
+        return;
+    }
+    // Process the packet based on its command and status
+    switch (pkt->command) {
+        case MessageType::ESTOP:
+            state.isEstopped = true;
+            break;
+        case MessageType::HEARTBEAT:
+            state.heartbeatActive = true;
+            break;
+        case MessageType::HANDSHAKE:
+            state.isSynced = true;
+            break;
+        default:
+            // Handle other message types or ignore
+            break;
+    }
 }
