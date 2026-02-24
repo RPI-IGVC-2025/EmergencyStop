@@ -9,7 +9,7 @@ void setup() {
   System_Init();
   OLED_Init();
   while(!state.OLEDActive){}
-  HandshakeService_Init();
+  //HandshakeService_Init();
 }
 
 void loop() {

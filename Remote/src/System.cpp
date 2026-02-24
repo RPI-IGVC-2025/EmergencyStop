@@ -1,39 +1,54 @@
+#include "System.h"
+
 #include <Arduino.h>
 #include <FreeRTOS.h>
-#include "System.h"
+
+#include "Algos/ADC.h"
 
 static TaskHandle_t SystemTask;
 
 SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
 
 SystemState state = {
-    .batteryMv = 0, // Start fully charged
+    .batteryMv = 0,  // Start fully charged
     .isSynced = false,
     .isEstopped = false,
     .heartbeatActive = false,
     .uptimeSeconds = 0,
-    .OLEDActive = false
+    .OLEDActive = false,
+    .potChannel = 1
 };
 
 void System_Init() {
     xTaskCreatePinnedToCore(
-        SystemLoop, /* Task function. */
-        "SystemTask",    /* name of task. */
-        4096,            /* Stack size */
+        SystemLoop,   /* Task function. */
+        "SystemTask", /* name of task. */
+        4096,         /* Stack size */
         NULL,
-        5,               /* Medium Priority out of all 3 tasks */
-        &SystemTask,     /* Task handle to keep track of created task */
-        1);              /* pin task to core 0 */
+        5,           /* Medium Priority out of all 3 tasks */
+        &SystemTask, /* Task handle to keep track of created task */
+        1);          /* pin task to core 0 */
 }
 
 void SystemLoop(void* pvParameters) {
+    TickType_t prevTime = xTaskGetTickCount();
+    int adcValue = 1;
     for (;;) {
         // Update uptime
-        state.uptimeSeconds++;
+        if (xTaskGetTickCount() - prevTime >= pdMS_TO_TICKS(1000)) {  // Every 1 second
+            state.uptimeSeconds++;
+            prevTime = xTaskGetTickCount();  // Reset prevTime to current time
+        }
 
         // Simulate battery drain
-        state.batteryMv = 9000 - (state.uptimeSeconds * 5); // Drain 5mV per 1 seconds
+        state.batteryMv -= 1;  // Drain 1mv per 1/20th of a second, so 50mv per second
 
-        vTaskDelay(pdMS_TO_TICKS(1000)); // Delay for 1 second
+        ADC_Read(&adcValue);
+        if (adcValue != state.potChannel) {
+            state.potChannel = adcValue;
+        }
+
+        // Update ADC channel
+        vTaskDelay(pdMS_TO_TICKS(50));  // Delay for 50 ms: 20hz
     }
 }

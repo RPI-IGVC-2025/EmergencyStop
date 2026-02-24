@@ -15,6 +15,7 @@ typedef struct SystemState {
   volatile bool heartbeatActive;
   volatile unsigned long uptimeSeconds;
   volatile bool OLEDActive;
+  volatile uint16_t potChannel;
 } SystemState;
 
 extern SystemState state;
