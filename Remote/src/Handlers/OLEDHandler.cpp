@@ -46,14 +46,19 @@ void OLEDTask(void* pvParameters) {
 
     for (;;) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        if (xSemaphoreTake(xMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+        //if (xSemaphoreTake(xMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
             drawInfoScreen();
-            xSemaphoreGive(xMutex);  // ALWAYS give it back!
-        }
+            //xSemaphoreGive(xMutex);  // ALWAYS give it back!
+        //}
     }
 }
 
 void drawInfoScreen() {
+    if(!state.channelLocked) {
+        drawChannelSelectScreen();
+        return;
+    }
+
     u8g2.clearBuffer();
     u8g2.setFontMode(1);
     u8g2.setBitmapMode(1);
@@ -120,12 +125,16 @@ void drawBattery() {
     }
 }
 
+void drawChannelSelectScreen() {
+    //
+}
+
 void initSequence() {
     u8g2.clearBuffer();
     u8g2.setFontMode(1);
     u8g2.setBitmapMode(1);
     // Layer 1
-    u8g2.drawXBMP(-1, 9, 130, 56, IMAGE_JERRY);
+    u8g2.drawXBMP(0, 9, 130, 56, IMAGE_JERRY);
 
     // Layer 2
     u8g2.drawLine(0, 9, 127, 9);
@@ -134,6 +143,8 @@ void initSequence() {
     u8g2.setFont(u8g2_font_5x7_tr);
     u8g2.drawStr(33, 7, "RPI ROBOTICS");
 
+    u8g2.sendBuffer();
+    
     vTaskDelay(pdMS_TO_TICKS(7500));
     clearScreen();
     vTaskDelay(pdMS_TO_TICKS(1000));

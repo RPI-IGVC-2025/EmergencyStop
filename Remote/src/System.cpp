@@ -10,7 +10,8 @@ static TaskHandle_t SystemTask;
 SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
 
 SystemState state = {
-    .batteryMv = 0,  // Start fully charged
+    .batteryMv = 9000,  // Start fully charged
+    .channelLocked = false,
     .isSynced = false,
     .isEstopped = false,
     .heartbeatActive = false,
@@ -27,7 +28,7 @@ void System_Init() {
         NULL,
         5,           /* Medium Priority out of all 3 tasks */
         &SystemTask, /* Task handle to keep track of created task */
-        1);          /* pin task to core 0 */
+        0);          /* pin task to core 0 */
 }
 
 void SystemLoop(void* pvParameters) {
@@ -47,6 +48,7 @@ void SystemLoop(void* pvParameters) {
         if (adcValue != state.potChannel) {
             state.potChannel = adcValue;
         }
+        Serial.println(state.potChannel);
 
         // Update ADC channel
         vTaskDelay(pdMS_TO_TICKS(50));  // Delay for 50 ms: 20hz

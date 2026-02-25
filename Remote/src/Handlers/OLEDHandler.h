@@ -34,6 +34,8 @@ void initSequence();
 void clearScreen();
 
 void drawInfoScreen();
+void drawChannelSelectScreen();
+
 void drawNetwork();
 void drawTimeElapsed();
 void drawBattery();

@@ -10,6 +10,7 @@ extern SemaphoreHandle_t xMutex;
 
 typedef struct SystemState {
   volatile uint32_t batteryMv;
+  volatile bool channelLocked;
   volatile bool isSynced;
   volatile bool isEstopped;
   volatile bool heartbeatActive;

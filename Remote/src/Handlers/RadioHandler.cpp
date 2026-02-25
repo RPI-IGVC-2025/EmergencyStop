@@ -11,12 +11,14 @@ HardwareSerial HC12(1);
 const int hc12_rx = 18;
 const int hc12_tx = 17;
 
+const int SET_PIN = 5;
+
 RadioState radioState = {
-    .currentChannel = 1
-};   
+    .currentChannel = 1};
 
 void Radio_Init() {
     HC12.begin(9600, SERIAL_8N1, hc12_rx, hc12_tx);
+    pinMode(SET_PIN, OUTPUT);
 }
 
 bool getNextFrame(Packet* outPkt) {
@@ -72,8 +74,15 @@ void switchChannel(uint16_t newChannel) {
     // Implement the logic to switch the HC-12 to the new channel
     // This typically involves sending specific AT commands to the HC-12 module
     // For example, you might send "AT+C001" for channel 1, "AT+C002" for channel 2, etc.
+
+    digitalWrite(SET_PIN, LOW);  // Set to LOW to enter command mode
     char command[10];
     snprintf(command, sizeof(command), "AT+C%03d", newChannel);
     HC12.println(command);
-    radioState.currentChannel = newChannel;
+     while (HC12.available()) {
+        String response = HC12.readString();
+        Serial.println(response);  // Should print "OK+C002"
+    }
+    digitalWrite(SET_PIN, HIGH);  // Exit AT mode
+    //radioState.currentChannel = newChannel;
 }

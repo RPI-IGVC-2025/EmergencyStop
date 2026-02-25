@@ -6,5 +6,5 @@ void ADC_Init() {
 }
 
 void ADC_Read(int* value) {
-  *value = (analogRead(POTENTIOMETER_PIN)/pow(2,12))*ADC_MAX_VALUE;
+  *value = (analogRead(POTENTIOMETER_PIN)/pow(2,12))*ADC_MAX_VALUE+1;
 }

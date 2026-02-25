@@ -3,5 +3,7 @@
 #include <Arduino.h>
 #include "Algos/PacketBuilder.h"
 
+static TaskHandle_t SelectChannelServiceTask;
+static TaskHandle_t HandshakeServiceTask;
 
 #endif
