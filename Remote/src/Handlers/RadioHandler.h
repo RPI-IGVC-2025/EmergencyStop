@@ -10,5 +10,8 @@ struct RadioState {
 void Radio_Init();
 void processValidatedPacket(Packet *pkt);
 bool getNextFrame(Packet* outPkt);
+void HC12switchChannel(uint16_t newChannel);
+
+uint16_t getCurrentChannel();
 
 #endif

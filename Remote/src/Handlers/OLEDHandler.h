@@ -4,7 +4,9 @@
 #include <U8g2lib.h>
 
 struct OLEDState {
+    volatile bool channelSelectionActive;
     volatile bool handShakeComplete;
+    volatile int updateDelayMS;
 };
 
 // Images
@@ -36,11 +38,16 @@ void clearScreen();
 void drawInfoScreen();
 void drawChannelSelectScreen();
 
+void drawNumberLine(int num);
+int getNumberLineOffset(int num);
+
 void drawNetwork();
 void drawTimeElapsed();
 void drawBattery();
 
 char* formatTime(unsigned long seconds);
 char* formatDots(TickType_t ticks);
+
+void changeOLEDUpdateDelay(int newDelayMS);
 
 #endif

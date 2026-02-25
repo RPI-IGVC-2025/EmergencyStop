@@ -17,8 +17,7 @@ SystemState state = {
     .heartbeatActive = false,
     .uptimeSeconds = 0,
     .OLEDActive = false,
-    .potChannel = 1
-};
+    .potChannel = 1};
 
 void System_Init() {
     xTaskCreatePinnedToCore(
@@ -44,11 +43,13 @@ void SystemLoop(void* pvParameters) {
         // Simulate battery drain
         state.batteryMv -= 1;  // Drain 1mv per 1/20th of a second, so 50mv per second
 
-        ADC_Read(&adcValue);
-        if (adcValue != state.potChannel) {
-            state.potChannel = adcValue;
+        if (!state.channelLocked) {
+            ADC_Read(&adcValue);
+            if (adcValue != state.potChannel) {
+                state.potChannel = adcValue;
+            }
+            //Serial.println(state.potChannel);
         }
-        Serial.println(state.potChannel);
 
         // Update ADC channel
         vTaskDelay(pdMS_TO_TICKS(50));  // Delay for 50 ms: 20hz

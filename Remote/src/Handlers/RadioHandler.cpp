@@ -14,7 +14,8 @@ const int hc12_tx = 17;
 const int SET_PIN = 5;
 
 RadioState radioState = {
-    .currentChannel = 1};
+    .currentChannel = 1
+};
 
 void Radio_Init() {
     HC12.begin(9600, SERIAL_8N1, hc12_rx, hc12_tx);
@@ -70,7 +71,7 @@ void sendHC12Command(char* command) {
     HC12.println(command);
 }
 
-void switchChannel(uint16_t newChannel) {
+void HC12switchChannel(uint16_t newChannel) {
     // Implement the logic to switch the HC-12 to the new channel
     // This typically involves sending specific AT commands to the HC-12 module
     // For example, you might send "AT+C001" for channel 1, "AT+C002" for channel 2, etc.
@@ -83,6 +84,11 @@ void switchChannel(uint16_t newChannel) {
         String response = HC12.readString();
         Serial.println(response);  // Should print "OK+C002"
     }
+    radioState.currentChannel = newChannel; // Update the current channel immediately after sending the command
     digitalWrite(SET_PIN, HIGH);  // Exit AT mode
     //radioState.currentChannel = newChannel;
+}
+
+uint16_t getCurrentChannel() {
+    return radioState.currentChannel;
 }
