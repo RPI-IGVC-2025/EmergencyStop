@@ -1,13 +1,15 @@
 #include <Arduino.h>
 
 #include "Handlers/RadioHandler.h"
-#include "HC12Service.h"
+#include "ChannelService.h"
 #include "System.h"
 #include "Handlers/OLEDHandler.h"
 
 ChannelServiceStatus channelServiceStatus = {
     .timeRemaining = 0
 };
+
+// Channel Selection Task
 
 void SelectChannelServiceLoop(void* pvParameters);
 
@@ -40,7 +42,7 @@ void SelectChannelServiceLoop(void* pvParameters) {
             Serial.print(userHasInteracted);
             Serial.print("  ");
             Serial.println(abs(currentADC - lastSeenADC));
-            if (abs(currentADC - lastSeenADC) > 0) { // Almost no noise detected, so any change is user interaction
+            if (abs(currentADC - lastSeenADC) > 1) { // Almost no noise detected, so any change is user interaction
                 userHasInteracted = true;
                 lastChangeTime = xTaskGetTickCount();
                 Serial.println("Channel selection active");
@@ -55,11 +57,12 @@ void SelectChannelServiceLoop(void* pvParameters) {
             }
 
             // 3. Check for Timeout (5 seconds)
-            if (xTaskGetTickCount() - lastChangeTime > pdMS_TO_TICKS(6000)) {
-                HC12switchChannel(currentADC);
+            if (xTaskGetTickCount() - lastChangeTime > pdMS_TO_TICKS(5800)) {
+                setDesiredChannel(currentADC);
                 state.channelLocked = true;
                 changeOLEDUpdateDelay(1000);
                 
+                vTaskDelay(pdMS_TO_TICKS(250)); // Small delay to ensure the channel switch command is sent before printing
                 Serial.printf("Channel %d locked in!\n", currentADC);
                 vTaskDelete(NULL); 
             }
@@ -73,3 +76,4 @@ void SelectChannelServiceLoop(void* pvParameters) {
 int getChannelSelectionTimeRemaining() {
     return channelServiceStatus.timeRemaining;
 }
+

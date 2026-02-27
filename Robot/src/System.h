@@ -12,9 +12,8 @@ typedef struct SystemState {
   volatile uint32_t batteryMv;
   volatile bool isSynced;
   volatile bool isEstopped;
-  volatile bool heartbeatActive;
   volatile unsigned long uptimeSeconds;
-  volatile bool OLEDActive;
+  volatile bool radioReady;
 } SystemState;
 
 extern SystemState state;

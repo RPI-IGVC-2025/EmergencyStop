@@ -8,7 +8,7 @@ uint16_t noncePool[10];
 int nonceIndex = 0;
 unsigned long seed = esp_random();  // Initial seed value for random numbers;
 
-void buildPacket(Packet* pkt, MessageType type, StatusCode code) {
+void buildPacket(Packet* pkt, MessageType type, StatusCode code, uint8_t channel) {
   // Actual Command being sent
 
   pkt->command = (uint8_t)type;
@@ -23,8 +23,21 @@ void buildPacket(Packet* pkt, MessageType type, StatusCode code) {
 
   pkt->status = (uint8_t)code;
 
+  if(IS_REMOTE) {
+    pkt->ownerID = OWNER_ID_REMOTE;
+  } else {
+    pkt->ownerID = OWNER_ID_ROBOT;
+  }
+
+  pkt->channel = channel;
+
   // Hashing
   generateBLAKE(pkt);
+}
+
+// Overloaded function for when no channel is needed
+void buildPacket(Packet* pkt, MessageType type, StatusCode code) {
+  buildPacket(pkt, type, code, 0);
 }
 
 

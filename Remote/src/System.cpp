@@ -17,7 +17,8 @@ SystemState state = {
     .heartbeatActive = false,
     .uptimeSeconds = 0,
     .OLEDActive = false,
-    .potChannel = 1};
+    .potChannel = 1
+};
 
 void System_Init() {
     xTaskCreatePinnedToCore(

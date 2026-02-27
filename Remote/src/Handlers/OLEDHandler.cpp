@@ -7,7 +7,7 @@
 #include <task.h>
 
 #include "RadioHandler.h"
-#include "Services/HC12Service.h"
+#include "Services/ChannelService.h"
 #include "System.h"
 
 void OLEDTask(void* pvParameters);
@@ -149,7 +149,7 @@ void drawChannelSelectScreen() {
 
         u8g2.setFont(u8g2_font_t0_11_tr);
         snprintf(strNum, sizeof(strNum), "%d", state.potChannel);
-        u8g2.drawStr((state.potChannel > 9 ? 59 : 63), 37, strNum);
+        u8g2.drawStr((state.potChannel > 9 ? 60 : 63), 37, strNum);
 
         u8g2.sendBuffer();
         vTaskDelay(pdMS_TO_TICKS(3000));

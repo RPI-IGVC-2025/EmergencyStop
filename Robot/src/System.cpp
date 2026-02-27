@@ -10,9 +10,8 @@ SystemState state = {
     .batteryMv = 0, // Start fully charged
     .isSynced = false,
     .isEstopped = false,
-    .heartbeatActive = false,
     .uptimeSeconds = 0,
-    .OLEDActive = false
+    .radioReady = false
 };
 
 void System_Init() {

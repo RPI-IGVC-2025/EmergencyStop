@@ -11,8 +11,21 @@ HardwareSerial HC12(1);
 const int hc12_rx = 18;
 const int hc12_tx = 17;
 
+const int SET_PIN = 5;
+
+RadioState radioState = {
+    .desiredChannel = 1,
+    .currentChannel = 1};
+
 void Radio_Init() {
     HC12.begin(9600, SERIAL_8N1, hc12_rx, hc12_tx);
+    pinMode(SET_PIN, OUTPUT);
+    digitalWrite(SET_PIN, HIGH);
+    while (!HC12setDefault()) {
+        Serial.println("Failed to set HC12 to default settings. Retrying...");
+        delay(300);
+    }  // Default to channel 1 on startup
+    state.radioReady = true;
 }
 
 bool getNextFrame(Packet* outPkt) {
@@ -39,23 +52,72 @@ bool getNextFrame(Packet* outPkt) {
     return true;
 }
 
-void processValidatedPacket(Packet* pkt) {
-    if (!verifyPacket(pkt)) {
-        return;
+void sendPacket(Packet* pkt) {
+    uint8_t buffer[sizeof(Packet)];
+    memcpy(buffer, pkt, sizeof(Packet));
+
+    HC12.write(buffer, sizeof(Packet));
+
+    clearPacket(pkt);
+}
+
+void clearPacket(Packet* pkt) {
+    memset(pkt, 0, sizeof(Packet));
+}
+
+bool HC12setDefault() {
+    char command[16];
+    int len = snprintf(command, sizeof(command), "AT+DEFAULT");
+    if (memcmp(HC12sendCommand(command), "OK+DEFAULT", len) == 0) {
+        return true;
     }
-    // Process the packet based on its command and status
-    switch (pkt->command) {
-        case MessageType::ESTOP:
-            state.isEstopped = true;
-            break;
-        case MessageType::HEARTBEAT:
-            state.heartbeatActive = true;
-            break;
-        case MessageType::HANDSHAKE:
-            state.isSynced = true;
-            break;
-        default:
-            // Handle other message types or ignore
-            break;
+    return false;
+}
+
+bool HC12switchChannel(uint16_t newChannel) {
+    char command[16];
+    int len = snprintf(command, sizeof(command), "AT+C%03d", newChannel);
+    char response[16];
+    len = snprintf(response, sizeof(response), "OK+C%03d", newChannel);
+    if (memcmp(HC12sendCommand(command), response, len) == 0) {
+        return true;
     }
+    return false;
+}
+
+char* HC12sendCommand(char* command) {
+    digitalWrite(SET_PIN, LOW);
+    vTaskDelay(pdMS_TO_TICKS(100));  // Entrance delay
+
+    // Clear any "garbage" in the buffer before sending
+    while (HC12.available()) HC12.read();
+
+    HC12.print(command);
+
+    Serial.print("Sent to HC12: ");
+    Serial.println(command);
+
+    vTaskDelay(pdMS_TO_TICKS(500));  // Generous buffer
+
+    if (HC12.available()) {
+        while (HC12.available()) {
+            String response = HC12.readString();
+            Serial.print("HC12 Response: ");
+            Serial.println(response);
+
+            digitalWrite(SET_PIN, HIGH);
+            vTaskDelay(pdMS_TO_TICKS(100));  // Exit delay
+            return strdup(response.c_str());
+        }
+    } else {
+        Serial.println("HC12 SILENT - No response.");
+    }
+}
+
+uint16_t getCurrentChannel() {
+    return radioState.currentChannel;
+}
+
+void setDesiredChannel(uint16_t newChannel) {
+    radioState.desiredChannel = newChannel;
 }

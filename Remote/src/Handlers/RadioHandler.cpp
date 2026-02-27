@@ -14,12 +14,15 @@ const int hc12_tx = 17;
 const int SET_PIN = 5;
 
 RadioState radioState = {
+    .desiredChannel = 1,
     .currentChannel = 1
 };
 
 void Radio_Init() {
     HC12.begin(9600, SERIAL_8N1, hc12_rx, hc12_tx);
     pinMode(SET_PIN, OUTPUT);
+    digitalWrite(SET_PIN, HIGH);
+    HC12setDefault(); // Default to channel 1 on startup
 }
 
 bool getNextFrame(Packet* outPkt) {
@@ -46,49 +49,61 @@ bool getNextFrame(Packet* outPkt) {
     return true;
 }
 
-void processValidatedPacket(Packet* pkt) {
-    if (!verifyPacket(pkt)) {
-        return;
-    }
-    // Process the packet based on its command and status
-    switch (pkt->command) {
-        case MessageType::ESTOP:
-            state.isEstopped = true;
-            break;
-        case MessageType::HEARTBEAT:
-            state.heartbeatActive = true;
-            break;
-        case MessageType::HANDSHAKE:
-            state.isSynced = true;
-            break;
-        default:
-            // Handle other message types or ignore
-            break;
-    }
+void sendPacket(Packet* pkt) {
+    uint8_t buffer[sizeof(Packet)];
+    memcpy(buffer, pkt, sizeof(Packet));
+
+    HC12.write(buffer, sizeof(Packet));
+
+    clearPacket(pkt);
 }
 
-void sendHC12Command(char* command) {
-    HC12.println(command);
+void clearPacket(Packet* pkt) {
+    memset(pkt, 0, sizeof(Packet));
+}
+
+void HC12setDefault() {
+    char command[16];
+    int len = snprintf(command, sizeof(command), "AT+DEFAULT");
+    HC12sendCommand(command);
 }
 
 void HC12switchChannel(uint16_t newChannel) {
-    // Implement the logic to switch the HC-12 to the new channel
-    // This typically involves sending specific AT commands to the HC-12 module
-    // For example, you might send "AT+C001" for channel 1, "AT+C002" for channel 2, etc.
+    char command[16];
+    int len = snprintf(command, sizeof(command), "AT+C%03d", newChannel);
+    HC12sendCommand(command);
+}
 
-    digitalWrite(SET_PIN, LOW);  // Set to LOW to enter command mode
-    char command[10];
-    snprintf(command, sizeof(command), "AT+C%03d", newChannel);
-    HC12.println(command);
-     while (HC12.available()) {
-        String response = HC12.readString();
-        Serial.println(response);  // Should print "OK+C002"
+void HC12sendCommand(char* command) {
+    digitalWrite(SET_PIN, LOW);  
+    vTaskDelay(pdMS_TO_TICKS(100)); // Entrance delay
+    
+    // Clear any "garbage" in the buffer before sending
+    while(HC12.available()) HC12.read();
+
+    HC12.print(command);
+    
+    Serial.print("Sent to HC12: "); Serial.println(command);
+
+    vTaskDelay(pdMS_TO_TICKS(500)); // Generous buffer
+
+    if (HC12.available()) {
+        while (HC12.available()) {
+            String response = HC12.readString();
+            Serial.print("HC12 Response: "); Serial.println(response);
+        }
+    } else {
+        Serial.println("HC12 SILENT - No response.");
     }
-    radioState.currentChannel = newChannel; // Update the current channel immediately after sending the command
-    digitalWrite(SET_PIN, HIGH);  // Exit AT mode
-    //radioState.currentChannel = newChannel;
+
+    digitalWrite(SET_PIN, HIGH);
+    vTaskDelay(pdMS_TO_TICKS(100)); // Exit delay
 }
 
 uint16_t getCurrentChannel() {
     return radioState.currentChannel;
+}
+
+void setDesiredChannel(uint16_t newChannel) {
+    radioState.desiredChannel = newChannel;
 }

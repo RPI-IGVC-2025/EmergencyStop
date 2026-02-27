@@ -1,18 +1,20 @@
 #include <Arduino.h>
-
-// put function declarations here:
-int myFunction(int, int);
+#include "Algos/PacketBuilder.h"
+#include "Handlers/RadioHandler.h"  
+#include "System.h"
+#include "Services/HandshakeService.h"
 
 void setup() {
   // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
+  delay(5000);
+  System_Init();
+  Radio_Init();
+  while(!state.radioReady){}
+  Serial.println("Radio ready, starting handshake service...");
+  HandshakeService_Init();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
 }

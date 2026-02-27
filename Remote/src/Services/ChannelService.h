@@ -1,5 +1,5 @@
-#ifndef HC12SERVICE_H
-#define HC12SERVICE_H
+#ifndef CHANNELSERVICE_H
+#define CHANNELSERVICE_H
 #include <Arduino.h>
 #include "Algos/PacketBuilder.h"
 
