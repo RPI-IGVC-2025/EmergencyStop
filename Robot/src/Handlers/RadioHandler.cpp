@@ -21,6 +21,7 @@ void Radio_Init() {
     HC12.begin(9600, SERIAL_8N1, hc12_rx, hc12_tx);
     pinMode(SET_PIN, OUTPUT);
     digitalWrite(SET_PIN, HIGH);
+    delay(1000);  // Wait for HC12 to initialize
     while (!HC12setDefault()) {
         Serial.println("Failed to set HC12 to default settings. Retrying...");
         delay(300);
@@ -30,18 +31,26 @@ void Radio_Init() {
 
 bool getNextFrame(Packet* outPkt) {
     // If there aren't even enough bytes for a full packet, bail immediately
-    if (HC12.available() < sizeof(Packet))
+    if (HC12.available() < sizeof(Packet)) {
+        Serial.println("1");
         return false;
+    }
 
     // Hunt for Syncbyte
     if (HC12.peek() != SYNC_BYTE) {
         HC12.read();
+        Serial.println("2");
         return false;
     }
 
     // Read the frame
     uint8_t tempBuf[sizeof(Packet)];
     HC12.readBytes(tempBuf, sizeof(Packet));
+
+    for (int i = 0; i < sizeof(Packet); i++) {
+        Serial.print(tempBuf[i]);
+        Serial.print(",");
+    }
 
     // Verify footer
     if (tempBuf[sizeof(Packet) - 1] != FOOT_BYTE) {
@@ -55,6 +64,12 @@ bool getNextFrame(Packet* outPkt) {
 void sendPacket(Packet* pkt) {
     uint8_t buffer[sizeof(Packet)];
     memcpy(buffer, pkt, sizeof(Packet));
+
+    for (int i = 0; i < sizeof(Packet); i++) {
+        Serial.print(buffer[i]);
+        Serial.print(",");
+    }
+    Serial.println();
 
     HC12.write(buffer, sizeof(Packet));
 
@@ -100,17 +115,19 @@ char* HC12sendCommand(char* command) {
     vTaskDelay(pdMS_TO_TICKS(500));  // Generous buffer
 
     if (HC12.available()) {
+        String response = "";
         while (HC12.available()) {
-            String response = HC12.readString();
+            response = HC12.readString();
             Serial.print("HC12 Response: ");
             Serial.println(response);
 
             digitalWrite(SET_PIN, HIGH);
             vTaskDelay(pdMS_TO_TICKS(100));  // Exit delay
-            return strdup(response.c_str());
         }
+        return strdup(response.c_str());
     } else {
         Serial.println("HC12 SILENT - No response.");
+        return strdup("");
     }
 }
 

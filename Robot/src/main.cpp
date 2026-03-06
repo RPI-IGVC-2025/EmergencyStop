@@ -8,9 +8,12 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   delay(5000);
+  Serial.println("Ts is running");
   System_Init();
   Radio_Init();
-  while(!state.radioReady){}
+  while(!state.radioReady){
+    Serial.println("Radio isnt ready");
+  }
   Serial.println("Radio ready, starting handshake service...");
   HandshakeService_Init();
 }
