@@ -3,6 +3,8 @@
 #include <Arduino.h>
 #include <FreeRTOS.h>
 
+const int selectionButton = 6;
+
 void System_Init();
 void SystemLoop(void* pvParameters);
 
@@ -17,6 +19,7 @@ typedef struct SystemState {
   volatile unsigned long uptimeSeconds;
   volatile bool OLEDActive;
   volatile uint16_t potChannel;
+  volatile bool radioReady;
 } SystemState;
 
 extern SystemState state;

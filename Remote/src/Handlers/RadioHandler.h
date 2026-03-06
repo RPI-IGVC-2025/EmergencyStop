@@ -4,18 +4,19 @@
 #include "Algos/PacketBuilder.h"
 
 struct RadioState {
-    volatile uint16_t desiredChannel;
-    volatile uint16_t currentChannel;
+    volatile uint8_t desiredChannel;
+    volatile uint8_t currentChannel;
 };
 
 void Radio_Init();
 bool getNextFrame(Packet* outPkt);
-void HC12switchChannel(uint16_t newChannel);
-void HC12setDefault();
-void HC12sendCommand(char* command);
+bool HC12setDefault();
+bool HC12switchChannel(uint8_t newChannel);
+char* HC12sendCommand(char* command);
 
-uint16_t getCurrentChannel();
-void setDesiredChannel(uint16_t newChannel);
+uint8_t getCurrentChannel();
+void setDesiredChannel(uint8_t newChannel);
+uint8_t getDesiredChannel();
 
 void sendPacket(Packet* pkt);
 void clearPacket(Packet* pkt);

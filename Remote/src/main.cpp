@@ -14,7 +14,7 @@ void setup() {
   //HandshakeService_Init();
   SelectChannelService_Init();
   while(!state.channelLocked) {}
-  vTaskDelay(pdMS_TO_TICKS(4000)); // Small delay to ensure channel lock is displayed on OLED before we start handshakes
+  vTaskDelay(pdMS_TO_TICKS(1000)); // Small delay to ensure channel lock is displayed on OLED before we start handshakes
   HandshakeService_Init();
 }
 
