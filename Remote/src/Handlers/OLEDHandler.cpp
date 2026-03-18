@@ -49,7 +49,7 @@ void OLEDTask(void* pvParameters) {
         pdMS_TO_TICKS(oledState.updateDelayMS);  // Exact 1s period
     initSequence();
     state.uptimeSeconds =
-        0;  // Reset uptime counter at the start of the OLED task
+        0;                    // Reset uptime counter at the start of the OLED task
     state.OLEDActive = true;  // Signal that OLED is active
 
     while (!state.radioReady) {
@@ -176,8 +176,8 @@ void drawChannelSelectScreen() {
     char strNum[3];
 
     if (state.channelLocked) {
-        oledState.channelSelectionActive =
-            false;  // Exit channel selection if locked
+        oledState.channelSelectionActive = false;  // Exit channel selection if locked
+        u8g2.setFont(u8g2_font_t0_14_tr);
         u8g2.drawStr(13, 12, "Channel Locked");
 
         // Selection square
@@ -186,6 +186,8 @@ void drawChannelSelectScreen() {
         u8g2.setFont(u8g2_font_t0_11_tr);
         snprintf(strNum, sizeof(strNum), "%d", state.potChannel);
         u8g2.drawStr((state.potChannel > 9 ? 60 : 63), 37, strNum);
+
+        u8g2.drawStr(38, 57, "Confirmed");
 
         u8g2.sendBuffer();
         vTaskDelay(pdMS_TO_TICKS(3000));
@@ -203,8 +205,10 @@ void drawChannelSelectScreen() {
     // Selection square
     u8g2.drawFrame(53, 23, 26, 20);
 
-    snprintf(strNum, sizeof(strNum), "%d", getChannelSelectionTimeRemaining());
-    u8g2.drawStr(63, 60, strNum);
+    if (getSelectionStatus()) {
+        u8g2.setFont(u8g2_font_t0_11_tr);
+        u8g2.drawStr(42, 57, "Confirm?");
+    }
 
     u8g2.sendBuffer();
 }
@@ -212,8 +216,7 @@ void drawChannelSelectScreen() {
 void drawNumberLine(int num) {
     int16_t xCoords = STARTING_X_COORD - getNumberLineOffset(num);
     u8g2.setFont(u8g2_font_t0_11_tr);
-    u8g2.drawStr(xCoords, 37,
-                 "1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16");
+    u8g2.drawStr(xCoords, 37, "1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16");
 }
 
 int getNumberLineOffset(int num) {

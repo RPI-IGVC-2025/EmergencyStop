@@ -10,7 +10,7 @@ void SystemLoop(void* pvParameters);
 
 extern SemaphoreHandle_t xMutex;
 
-typedef struct SystemState {
+typedef struct SystemData {
   volatile uint32_t batteryMv;
   volatile bool channelLocked;
   volatile bool isSynced;
@@ -20,8 +20,8 @@ typedef struct SystemState {
   volatile bool OLEDActive;
   volatile uint16_t potChannel;
   volatile bool radioReady;
-} SystemState;
+} SystemData;
 
-extern SystemState state;
+extern SystemData state;
 
 #endif

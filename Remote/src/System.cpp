@@ -9,7 +9,7 @@ static TaskHandle_t SystemTask;
 
 SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
 
-SystemState state = {
+SystemData state = {
     .batteryMv = 9000,  // Start fully charged
     .channelLocked = false,
     .isSynced = false,
@@ -54,6 +54,6 @@ void SystemLoop(void* pvParameters) {
         }
 
         // Update ADC channel
-        vTaskDelay(pdMS_TO_TICKS(50));  // Delay for 50 ms: 20hz
+        vTaskDelay(pdMS_TO_TICKS(5));  // Delay for 5 ms: 20hz
     }
 }

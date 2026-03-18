@@ -28,41 +28,81 @@ void Radio_Init() {
 }
 
 bool getNextFrame(Packet* outPkt) {
-    Serial.println("Check");
-    // If there aren't even enough bytes for a full packet, bail immediately
+    // 1. Bail immediately if there's no data at all
     if (HC12.available() == 0) {
-        Serial.println("1");
         return false;
     }
 
-    // Hunt for SyncbyteZ
-    if (HC12.available() >= sizeof(Packet) && HC12.peek() != SYNC_BYTE) {
-        Serial.println("No Sync Byte");
-        HC12.read();
+    // 2. THE INCINERATOR: Burn ALL trash until a Sync Byte is found
+    // Notice this is a WHILE loop, and it doesn't care about sizeof(Packet)
+    while (HC12.available() > 0 && HC12.peek() != SYNC_BYTE) {
+        HC12.read(); // Throw it away
     }
 
-    if(HC12.available() < sizeof(Packet)) {
-        Serial.println(HC12.available());
-        Serial.println("Not enough bytes");
-        return false;
+    // 3. Check what's left. If we burned the trash and don't have a full packet yet, wait.
+    if (HC12.available() < sizeof(Packet)) {
+        // It's completely normal to hit this. It means the packet is 
+        // literally flying through the air right now and we are waiting for the rest of it.
+        return false; 
     }
 
+    // 4. If we reach here, we GUARANTEE the first byte is SYNC_BYTE 
+    // AND we have exactly enough bytes to pull a full packet.
     uint8_t tempBuf[sizeof(Packet)];
-    int bytesRead = HC12.readBytes(tempBuf, sizeof(Packet));
+    HC12.readBytes(tempBuf, sizeof(Packet));
 
-    if(bytesRead > sizeof(Packet)) {
-        Serial.println("Overflow");
-        return false;
-    }
-
-    // Verify footer
+    // 5. Verify footer
     if (tempBuf[sizeof(Packet) - 1] != FOOT_BYTE) {
+        Serial.println("Alignment lost - Footer mismatch");
         return false;
     }
 
     memcpy(outPkt, tempBuf, sizeof(Packet));
     return true;
 }
+
+// bool getNextFrame(Packet* outPkt) {
+//     Serial.println("Check");
+//     // If there aren't even enough bytes for a full packet, bail immediately
+//     if (HC12.available() == 0) {
+//         Serial.println("1");
+//         return false;
+//     }
+
+//     // Hunt for SyncbyteZ
+//     if (HC12.available() >= sizeof(Packet) && HC12.peek() != SYNC_BYTE) {
+//         Serial.println("No Sync Byte");
+//         HC12.read();
+//     }
+
+//     if(HC12.available() < sizeof(Packet)) {
+//         Serial.println(HC12.available());
+//         Serial.println("Not enough bytes");
+//         return false;
+//     }
+
+//     uint8_t tempBuf[sizeof(Packet)];
+//     int bytesRead = HC12.readBytes(tempBuf, sizeof(Packet));
+
+//     for(int i = 0; i < sizeof(Packet); i++) {
+//         Serial.print(tempBuf[i]);
+//         Serial.print(", ");
+//     }
+//     Serial.println();
+
+//     if(bytesRead > sizeof(Packet)) {
+//         Serial.println("Overflow");
+//         return false;
+//     }
+
+//     // Verify footer
+//     if (tempBuf[sizeof(Packet) - 1] != FOOT_BYTE) {
+//         return false;
+//     }
+
+//     memcpy(outPkt, tempBuf, sizeof(Packet));
+//     return true;
+// }
 
 // bool getNextFrame(Packet* outPkt) {
 //     // If there aren't even enough bytes for a full packet, bail immediately
@@ -110,7 +150,7 @@ bool HC12setDefault() {
     return false;
 }
 
-bool HC12switchChannel(uint16_t newChannel) {
+bool HC12switchChannel(uint8_t newChannel) {
     char command[16];
     int len = snprintf(command, sizeof(command), "AT+C%03d", newChannel);
     char response[16];
@@ -151,6 +191,8 @@ char* HC12sendCommand(char* command) {
 }
 
 uint8_t getCurrentChannel() { return radioState.currentChannel; }
+
+void setCurrentChannel(uint8_t newChannel) { radioState.currentChannel = newChannel; }
 
 void setDesiredChannel(uint8_t newChannel) {
     radioState.desiredChannel = newChannel;

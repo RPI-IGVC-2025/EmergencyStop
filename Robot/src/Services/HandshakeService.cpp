@@ -32,6 +32,7 @@ void HandshakeServiceLoop(void* pvParameters) {
                 if (verifyPacket(&pkt)) {
                     Serial.println("Received valid packet from robot!");
                     if (pkt.command == MessageType::HANDSHAKE) {
+                        receivedChannel = pkt.channel;
                         Serial.println("Received handshake packet from robot!");
                         vTaskDelay(pdMS_TO_TICKS(50));  // Short delay before responding
                         for (int i = 0; i < 10; i++) {
@@ -41,7 +42,9 @@ void HandshakeServiceLoop(void* pvParameters) {
                             vTaskDelay(pdMS_TO_TICKS(1000));  // Delay between handshake packets
                         }
                         state.isSynced = true;
-                        HC12switchChannel(receivedChannel);  // Switch to the channel specified by the robot
+                        while(!HC12switchChannel(receivedChannel)) {
+                            vTaskDelay(pdMS_TO_TICKS(500));
+                        } // Switch to the channel specified by the robot
                     } else {
                         Serial.println("Received invalid packet!");
                     }

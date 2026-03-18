@@ -30,30 +30,32 @@ void Radio_Init() {
 }
 
 bool getNextFrame(Packet* outPkt) {
-    // If there aren't even enough bytes for a full packet, bail immediately
+    // 1. Bail immediately if there's no data at all
+    if (HC12.available() == 0) {
+        return false;
+    }
+
+    // 2. THE INCINERATOR: Burn ALL trash until a Sync Byte is found
+    // Notice this is a WHILE loop, and it doesn't care about sizeof(Packet)
+    while (HC12.available() > 0 && HC12.peek() != SYNC_BYTE) {
+        HC12.read(); // Throw it away
+    }
+
+    // 3. Check what's left. If we burned the trash and don't have a full packet yet, wait.
     if (HC12.available() < sizeof(Packet)) {
-        Serial.println("1");
-        return false;
+        // It's completely normal to hit this. It means the packet is 
+        // literally flying through the air right now and we are waiting for the rest of it.
+        return false; 
     }
 
-    // Hunt for Syncbyte
-    if (HC12.peek() != SYNC_BYTE) {
-        HC12.read();
-        Serial.println("2");
-        return false;
-    }
-
-    // Read the frame
+    // 4. If we reach here, we GUARANTEE the first byte is SYNC_BYTE 
+    // AND we have exactly enough bytes to pull a full packet.
     uint8_t tempBuf[sizeof(Packet)];
     HC12.readBytes(tempBuf, sizeof(Packet));
 
-    for (int i = 0; i < sizeof(Packet); i++) {
-        Serial.print(tempBuf[i]);
-        Serial.print(",");
-    }
-
-    // Verify footer
+    // 5. Verify footer
     if (tempBuf[sizeof(Packet) - 1] != FOOT_BYTE) {
+        Serial.println("Alignment lost - Footer mismatch");
         return false;
     }
 

@@ -14,7 +14,7 @@ void HandshakeService_Init() {
         4096,                   /* Stack size */
         NULL, 10,               /* Medium Priority out of all 3 tasks */
         &HandshakeServiceTask,  /* Task handle to keep track of created task */
-        0);                     /* pin task to core 1 */
+        0);                     /* pin task to core 0*/
 }
 
 void HandshakeServiceLoop(void* pvParameters) {
@@ -27,12 +27,15 @@ void HandshakeServiceLoop(void* pvParameters) {
             if(checkIncomingPacket(&pkt)) {
                 Serial.println("Received valid handshake packet");
                 if(pkt.channel == getDesiredChannel()) {
+                    for(; !HC12switchChannel(pkt.channel);) {}
+                    vTaskDelay(pdMS_TO_TICKS(7500));
                     state.isSynced = true;
                 }
             }
 
             if (state.isSynced) {
                 // If we're synced, we can stop sending handshakes
+                setCurrentChannel(getDesiredChannel());
                 xSemaphoreGive(xMutex);  // ALWAYS give it back!
                 vTaskDelete(NULL);       // Delete this task
             }
@@ -48,11 +51,10 @@ void HandshakeServiceLoop(void* pvParameters) {
             }
 
             xSemaphoreGive(xMutex);  // ALWAYS give it back!
-            Serial.println("Loop complete");
+            //Serial.println("Loop complete");
         }
 
-        vTaskDelay(
-            pdMS_TO_TICKS(50));  // Delay for 50ms to prevent task hogging
+        vTaskDelay(pdMS_TO_TICKS(50));  // Delay for 50ms to prevent task hogging
     }
 }
 

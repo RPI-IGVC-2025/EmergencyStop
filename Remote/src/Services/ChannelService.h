@@ -4,13 +4,13 @@
 #include "Algos/PacketBuilder.h"
 
 struct ChannelServiceStatus {
-    int timeRemaining;
+    bool confirmSelection;
 };
 
 static TaskHandle_t SelectChannelServiceTask;
 //static TaskHandle_t HandshakeServiceTask;
 
 void SelectChannelService_Init();
-int getChannelSelectionTimeRemaining();
+bool getSelectionStatus();
 
 #endif

@@ -17,6 +17,7 @@ char* HC12sendCommand(char* command);
 uint8_t getCurrentChannel();
 void setDesiredChannel(uint8_t newChannel);
 uint8_t getDesiredChannel();
+void setCurrentChannel(uint8_t newChannel);
 
 void sendPacket(Packet* pkt);
 void clearPacket(Packet* pkt);
