@@ -9,14 +9,6 @@ HeartbeatState heartbeatState = {
 };
 
 void HeartbeatService_Init() {
-    xTaskCreatePinnedToCore(
-        HeartbeatServiceLoop,   /* Task function. */
-        "HandshakeServiceTask", /* name of task. */
-        4096,                   /* Stack size */
-        NULL, 10,               /* Medium Priority out of all 3 tasks */
-        &HeartbeatServiceTask,  /* Task handle to keep track of created task */
-        1);                     /* pin task to core 0*/
-
     heartbeatState.lastHeartbeatPacket = xTaskGetTickCount();
     heartbeatState.heartbeatEnabled = true;
 }

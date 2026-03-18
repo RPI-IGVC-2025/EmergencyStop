@@ -1,16 +1,9 @@
 #include <Arduino.h>
 
 #include "EStopService.h"
+#include "System.h"
 
-void EStopService_Init() {
-    xTaskCreatePinnedToCore(
-        EStopServiceLoop,   /* Task function. */
-        "EStopServiceTask", /* name of task. */
-        4096,                   /* Stack size */
-        NULL, 10,               /* Medium Priority out of all 3 tasks */
-        &EStopServiceTask,  /* Task handle to keep track of created task */
-        0);                     /* pin task to core 1 */
-    
+void EStopService_Init() {    
     pinMode(ESTOP_PIN, INPUT_PULLUP);
 }
 

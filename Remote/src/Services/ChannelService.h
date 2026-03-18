@@ -10,6 +10,8 @@ struct ChannelServiceStatus {
 static TaskHandle_t SelectChannelServiceTask;
 //static TaskHandle_t HandshakeServiceTask;
 
+void SelectChannelServiceLoop(void* pvParameters);
+
 void SelectChannelService_Init();
 bool getSelectionStatus();
 

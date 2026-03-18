@@ -10,34 +10,23 @@ ChannelServiceStatus channelServiceStatus = {
     .confirmSelection = false
 };
 
-// Channel Selection Task
-
-void SelectChannelServiceLoop(void* pvParameters);
+// Channel Selection Tas
 
 void SelectChannelService_Init() {
-    pinMode(selectionButton, INPUT_PULLUP);
-
-    xTaskCreatePinnedToCore(
-        SelectChannelServiceLoop, /* Task function. */
-        "SelectChannelService",   /* name of task. */
-        4096,                     /* Stack size */
-        NULL,
-        7,                         /* Highest Priority out of all 3 tasks */
-        &SelectChannelServiceTask, /* Task handle to keep track of created task */
-        0);                        /* pin task to core 0 */
+    pinMode(SELECTION_PIN, INPUT_PULLUP);
 }
 
 void SelectChannelServiceLoop(void* pvParameters) {
-    int lastSeenADC = state.potChannel;
+    int lastSeenADC = data.potChannel;
     bool firstPressDetected = false;
     bool firstPressReleased = false; 
 
-    changeOLEDUpdateDelay(25);
+    changeOLEDUpdateDelay(50);
     Serial.println("SelectChannelService started");
 
     for (;;) {
-        int currentADC = state.potChannel;
-        bool isButtonPressed = (digitalRead(selectionButton) == LOW);
+        int currentADC = data.potChannel;
+        bool isButtonPressed = (digitalRead(SELECTION_PIN) == LOW);
 
         // Dialed turned, reset button
         if (abs(currentADC - lastSeenADC) > 0) {
@@ -65,11 +54,12 @@ void SelectChannelServiceLoop(void* pvParameters) {
             // STEP 3: Wait for the SECOND press to lock it in
             if (isButtonPressed) {
                 setDesiredChannel(currentADC);
-                state.channelLocked = true;
+                data.channelLocked = true;
                 changeOLEDUpdateDelay(1000);
                 
                 Serial.printf("Channel %d confirmed and locked!\n", currentADC);
-                vTaskDelete(NULL); 
+                transitionTo(STATE_HANDSHAKING);
+                break;
             }
         }
 

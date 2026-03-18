@@ -4,8 +4,6 @@
 #include <FreeRTOS.h>
 #include "Algos/PacketBuilder.h"
 
-const int ESTOP_PIN = 7;
-
 void EStopService_Init();
 void EStopServiceLoop(void* pvParameters);
 

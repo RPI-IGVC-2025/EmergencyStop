@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "ADC.h"
+#include "System.h"
 
 void ADC_Init() {
   pinMode(POTENTIOMETER_PIN, INPUT);

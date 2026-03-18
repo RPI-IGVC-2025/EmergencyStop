@@ -36,34 +36,32 @@ void OLED_Init() {
         OLEDTask,         /* Task function. */
         "OLEDTask",       /* name of task. */
         4096,             /* Stack size */
-        NULL, 6,          /* Lowest Priority out of all 3 tasks */
+        NULL, 4,          /* Lowest Priority out of all 3 tasks */
         &OLEDTaskHandler, /* Task handle to keep track of created task */
         1);               /* pin task to core 0 */
-    delay(500);
     vTaskDelay(pdMS_TO_TICKS(1000));
 }
 
 void OLEDTask(void* pvParameters) {
+    TickType_t xFrequency;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency =
-        pdMS_TO_TICKS(oledState.updateDelayMS);  // Exact 1s period
     initSequence();
-    state.uptimeSeconds =
-        0;                    // Reset uptime counter at the start of the OLED task
-    state.OLEDActive = true;  // Signal that OLED is active
+    data.uptimeSeconds = 0;  // Reset uptime counter at the start of the OLED task
+    data.OLEDActive = true;  // Signal that OLED is active
 
-    while (!state.radioReady) {
+    while (!data.radioReady) {
         drawHC12ResponseScreen();
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
-    vTaskDelay(
-        pdMS_TO_TICKS(500));  // Small delay to ensure the HC-12 response screen
-                              // is visible before switching to the main screen
+    vTaskDelay(pdMS_TO_TICKS(500));  // Small delay to ensure the HC-12 response screen is visible before switching to the main screen
     clearScreen();
-    vTaskDelay(pdMS_TO_TICKS(500));  // Small delay to ensure the screen is
-                                     // cleared before starting the main loop
+    vTaskDelay(pdMS_TO_TICKS(500));  // Small delay to ensure the screen is cleared before starting the main loop
+                                     
+    Serial.println("OLED Loop Begin");
 
     for (;;) {
+        xFrequency = pdMS_TO_TICKS(oledState.updateDelayMS);  // Exact 1s period
+
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         // if (xSemaphoreTake(xMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
         if (oledState.channelSelectionActive) {
@@ -106,12 +104,12 @@ void drawTimeElapsed() {
     u8g2.drawXBMP(1, 1, 15, 16, IMAGE_UPTIME);
     // Time Elapsed Text
     u8g2.setFont(u8g2_font_6x13_tr);
-    u8g2.drawStr(19, 14, formatTime(state.uptimeSeconds));
+    u8g2.drawStr(19, 14, formatTime(data.uptimeSeconds));
 }
 
 void drawNetwork() {
     // Network Icon
-    if (state.isSynced) {
+    if (data.isSynced) {
         u8g2.drawXBMP(80, 1, 15, 16, IMAGE_CONNECTED);
         u8g2.setFont(u8g2_font_5x7_tr);
         char strNum[3];
@@ -141,7 +139,7 @@ void drawHandshake(bool synced) {
 
 void drawBattery() {
     // Battery Icon
-    switch (state.batteryMv) {
+    switch (data.batteryMv) {
         case 8800 ... 9000:
             u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_FULL);
             break;
@@ -175,7 +173,7 @@ void drawChannelSelectScreen() {
 
     char strNum[3];
 
-    if (state.channelLocked) {
+    if (data.channelLocked) {
         oledState.channelSelectionActive = false;  // Exit channel selection if locked
         u8g2.setFont(u8g2_font_t0_14_tr);
         u8g2.drawStr(13, 12, "Channel Locked");
@@ -184,8 +182,8 @@ void drawChannelSelectScreen() {
         u8g2.drawFrame(53, 23, 26, 20);
 
         u8g2.setFont(u8g2_font_t0_11_tr);
-        snprintf(strNum, sizeof(strNum), "%d", state.potChannel);
-        u8g2.drawStr((state.potChannel > 9 ? 60 : 63), 37, strNum);
+        snprintf(strNum, sizeof(strNum), "%d", data.potChannel);
+        u8g2.drawStr((data.potChannel > 9 ? 60 : 63), 37, strNum);
 
         u8g2.drawStr(38, 57, "Confirmed");
 
@@ -196,7 +194,7 @@ void drawChannelSelectScreen() {
     }
 
     // Number line
-    drawNumberLine(state.potChannel);
+    drawNumberLine(data.potChannel);
 
     // Static text
     u8g2.setFont(u8g2_font_t0_14_tr);

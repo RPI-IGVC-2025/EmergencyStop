@@ -4,12 +4,18 @@
 #include <FreeRTOS.h>
 
 #include "Algos/ADC.h"
+#include "Handlers/OLEDHandler.h"
+#include "Handlers/RadioHandler.h"
+#include "Services/ChannelService.h"
+#include "Services/EStopService.h"
+#include "Services/HandshakeService.h"
+#include "Services/HeartbeatService.h"
 
 static TaskHandle_t SystemTask;
 
 SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
 
-SystemData state = {
+SystemData data = {
     .batteryMv = 9000,  // Start fully charged
     .channelLocked = false,
     .isSynced = false,
@@ -20,6 +26,8 @@ SystemData state = {
     .potChannel = 1,
     .radioReady = false
 };
+
+SystemState remoteState = STATE_BOOTING;
 
 void System_Init() {
     xTaskCreatePinnedToCore(
@@ -38,22 +46,58 @@ void SystemLoop(void* pvParameters) {
     for (;;) {
         // Update uptime
         if (xTaskGetTickCount() - prevTime >= pdMS_TO_TICKS(1000)) {  // Every 1 second
-            state.uptimeSeconds++;
+            data.uptimeSeconds++;
             prevTime = xTaskGetTickCount();  // Reset prevTime to current time
         }
 
         // Simulate battery drain
-        state.batteryMv -= 1;  // Drain 1mv per 1/20th of a second, so 50mv per second
+        data.batteryMv -= 1;  // Drain 1mv per 1/20th of a second, so 50mv per second
 
-        if (!state.channelLocked) {
+        if (!data.channelLocked) {
             ADC_Read(&adcValue);
-            if (adcValue != state.potChannel) {
-                state.potChannel = adcValue;
+            if (adcValue != data.potChannel) {
+                data.potChannel = adcValue;
             }
-            //Serial.println(state.potChannel);
+            // Serial.println(state.potChannel);
         }
 
         // Update ADC channel
         vTaskDelay(pdMS_TO_TICKS(5));  // Delay for 5 ms: 20hz
+    }
+}
+
+// System.cpp
+void transitionTo(SystemState newState) {
+    // 1. Clean up the OLD state
+    switch (remoteState) {
+        case STATE_SELECTING_CHANNEL:
+            Serial.println("deleting channel service");
+            vTaskDelete(&SelectChannelServiceTask);  // Kill it once it's done
+            break;
+        case STATE_HANDSHAKING:
+        Serial.println("deleting handshake");
+            vTaskDelete(&HandshakeServiceTask);
+            break;
+    }
+
+    remoteState = newState;
+
+    // 2. Start the NEW state
+    switch (remoteState) {
+        case STATE_SELECTING_CHANNEL:
+            SelectChannelService_Init();
+            xTaskCreatePinnedToCore(SelectChannelServiceLoop, "ChannelSelect", 4096, NULL, 5, &SelectChannelServiceTask, 1);
+            break;
+        case STATE_HANDSHAKING:
+            // Instead of an Init function that stays alive,
+            // just start the task here.
+            HandshakeService_Init();
+            xTaskCreatePinnedToCore(HandshakeServiceLoop, "Handshake", 4096, NULL, 5, &HandshakeServiceTask, 1);
+            break;
+
+        case STATE_OPERATIONAL:
+            xTaskCreatePinnedToCore(HeartbeatServiceLoop, "Heartbeat", 2048, NULL, 6, &HeartbeatServiceTask, 1);
+            xTaskCreatePinnedToCore(EStopServiceLoop, "EStop", 2048, NULL, 7, &EStopServiceTask, 1);
+            break;
     }
 }
