@@ -51,6 +51,13 @@ bool getNextFrame(Packet* outPkt) {
     uint8_t tempBuf[sizeof(Packet)];
     HC12.readBytes(tempBuf, sizeof(Packet));
 
+    Serial.println("PACKET: ");
+    for(int i = 0; i < sizeof(Packet); i++) {
+        Serial.print(tempBuf[i]);
+        Serial.print(", ");
+    }
+    Serial.println();
+
     // 5. Verify footer
     if (tempBuf[sizeof(Packet) - 1] != FOOT_BYTE) {
         Serial.println("Alignment lost - Footer mismatch");

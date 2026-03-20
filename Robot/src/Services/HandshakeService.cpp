@@ -9,14 +9,6 @@
 #include "System.h"
 
 void HandshakeService_Init() {
-    xTaskCreatePinnedToCore(
-        HandshakeServiceLoop,  // Task function
-        "HandshakeService",    // Name of the task
-        4096,                  // Stack size in words
-        NULL,                  // Task input parameter
-        2,                     // Priority of the task
-        &HandshakeServiceTask,
-        0);  // Task handle
 }
 
 void HandshakeServiceLoop(void* pvParameters) {
@@ -27,34 +19,27 @@ void HandshakeServiceLoop(void* pvParameters) {
         // Serial.println("HandshakeService: Loop complete");
         if (xSemaphoreTake(xMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
             // Check for received packet from Robot
-            if (getNextFrame(&pkt)) {
-                Serial.println("Received packet");
-                if (verifyPacket(&pkt)) {
-                    Serial.println("Received valid packet from robot!");
-                    if (pkt.command == MessageType::HANDSHAKE) {
-                        receivedChannel = pkt.channel;
-                        Serial.println("Received handshake packet from robot!");
-                        vTaskDelay(pdMS_TO_TICKS(50));  // Short delay before responding
-                        for (int i = 0; i < 10; i++) {
-                            Serial.println("Sent");
-                            buildPacket(&handshakePkt, MessageType::HANDSHAKE, StatusCode::OK, receivedChannel);
-                            sendPacket(&handshakePkt);
-                            vTaskDelay(pdMS_TO_TICKS(1000));  // Delay between handshake packets
-                        }
-                        state.isSynced = true;
-                        while(!HC12switchChannel(receivedChannel)) {
-                            vTaskDelay(pdMS_TO_TICKS(500));
-                        } // Switch to the channel specified by the robot
-                    } else {
-                        Serial.println("Received invalid packet!");
-                    }
+            if (checkHandshakePacket(&pkt)) {
+                receivedChannel = pkt.channel;
+                Serial.println("Received handshake packet from robot!");
+                vTaskDelay(pdMS_TO_TICKS(50));  // Short delay before responding
+                for (int i = 0; i < 10; i++) {
+                    Serial.println("Sent");
+                    buildPacket(&handshakePkt, MessageType::HANDSHAKE, StatusCode::OK, receivedChannel);
+                    sendPacket(&handshakePkt);
+                    vTaskDelay(pdMS_TO_TICKS(500 + random(0, 250)));  // Delay between handshake packets
                 }
+                data.isSynced = true;
+                while (!HC12switchChannel(receivedChannel)) {
+                    vTaskDelay(pdMS_TO_TICKS(500));
+                }  // Switch to the channel specified by the robot
 
-                if (state.isSynced) {
+                if (data.isSynced) {
                     // If we're synced, we can stop sending handshakes
                     Serial.println("HandshakeService: Synced, ending task");
                     xSemaphoreGive(xMutex);  // ALWAYS give it back!
-                    vTaskDelete(NULL);       // Delete this task
+                    transitionTo(STATE_OPERATIONAL);
+                    vTaskDelete(NULL);  // Delete this task
                 }
             }
 
@@ -63,4 +48,11 @@ void HandshakeServiceLoop(void* pvParameters) {
             vTaskDelay(pdMS_TO_TICKS(50));  // Delay for 100ms to prevent task hogging
         }
     }
+}
+
+bool checkHandshakePacket(Packet* pkt) {
+    if (!getNextFrame(pkt)) return false;
+    if (!verifyPacket(pkt)) return false;
+    if (pkt->command != MessageType::HANDSHAKE) return false;
+    return true;
 }

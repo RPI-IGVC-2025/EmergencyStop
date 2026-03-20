@@ -31,6 +31,7 @@ void HandshakeServiceLoop(void* pvParameters) {
                 setCurrentChannel(getDesiredChannel());
                 xSemaphoreGive(xMutex);  // ALWAYS give it back!
                 transitionTo(STATE_OPERATIONAL);
+                vTaskDelete(NULL);
             }
             
             // Send a packet every 1 second

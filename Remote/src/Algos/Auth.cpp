@@ -2,6 +2,7 @@
 #include "Auth.h"
 #include "Blake.h"
 #include "PacketBuilder.h"
+#include "System.h"
 
 uint16_t usedMask = 0;
 uint32_t prevMinNonce = 0;
@@ -85,4 +86,17 @@ bool verifyHash(Packet *pkt) {
         Serial.println("Hash verification failed");
         return false; // Hash does not match, packet may be tampered with
     }
+}
+
+bool verifyOwner(Packet *pkt) {
+    if(!IS_REMOTE) {
+        if(pkt->ownerID == OWNER_ID_REMOTE) {
+            return true;
+        }
+    } else {
+        if(pkt->ownerID == OWNER_ID_ROBOT) {
+            return true;
+        }
+    }
+    return false;
 }

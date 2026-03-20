@@ -58,8 +58,9 @@ void SelectChannelServiceLoop(void* pvParameters) {
                 changeOLEDUpdateDelay(1000);
                 
                 Serial.printf("Channel %d confirmed and locked!\n", currentADC);
+                vTaskDelay(pdMS_TO_TICKS(5000));
                 transitionTo(STATE_HANDSHAKING);
-                break;
+                vTaskDelete(NULL);
             }
         }
 

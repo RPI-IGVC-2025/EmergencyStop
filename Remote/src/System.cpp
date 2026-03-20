@@ -24,8 +24,7 @@ SystemData data = {
     .uptimeSeconds = 0,
     .OLEDActive = false,
     .potChannel = 1,
-    .radioReady = false
-};
+    .radioReady = false};
 
 SystemState remoteState = STATE_BOOTING;
 
@@ -68,18 +67,6 @@ void SystemLoop(void* pvParameters) {
 
 // System.cpp
 void transitionTo(SystemState newState) {
-    // 1. Clean up the OLD state
-    switch (remoteState) {
-        case STATE_SELECTING_CHANNEL:
-            Serial.println("deleting channel service");
-            vTaskDelete(&SelectChannelServiceTask);  // Kill it once it's done
-            break;
-        case STATE_HANDSHAKING:
-        Serial.println("deleting handshake");
-            vTaskDelete(&HandshakeServiceTask);
-            break;
-    }
-
     remoteState = newState;
 
     // 2. Start the NEW state
@@ -96,6 +83,8 @@ void transitionTo(SystemState newState) {
             break;
 
         case STATE_OPERATIONAL:
+            EStopService_Init();
+            HeartbeatService_Init();
             xTaskCreatePinnedToCore(HeartbeatServiceLoop, "Heartbeat", 2048, NULL, 6, &HeartbeatServiceTask, 1);
             xTaskCreatePinnedToCore(EStopServiceLoop, "EStop", 2048, NULL, 7, &EStopServiceTask, 1);
             break;

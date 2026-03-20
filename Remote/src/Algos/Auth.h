@@ -7,5 +7,6 @@ bool verifyPacket(Packet* pkt);
 bool verifySequence(Packet* pkt);
 bool verifyNonce(Packet* pkt);
 bool verifyHash(Packet* pkt);
+bool verifyOwner(Packet* pkt); 
 
 #endif

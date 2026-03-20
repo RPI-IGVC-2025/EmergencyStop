@@ -26,7 +26,7 @@ void Radio_Init() {
         Serial.println("Failed to set HC12 to default settings. Retrying...");
         delay(300);
     }  // Default to channel 1 on startup
-    state.radioReady = true;
+    data.radioReady = true;
 }
 
 bool getNextFrame(Packet* outPkt) {
