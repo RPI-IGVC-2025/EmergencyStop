@@ -9,7 +9,10 @@
 #include "System.h"
 
 void HandshakeService_Init() {
+
 }
+
+// Add logic for a remote response
 
 void HandshakeServiceLoop(void* pvParameters) {
     Packet pkt, handshakePkt;
