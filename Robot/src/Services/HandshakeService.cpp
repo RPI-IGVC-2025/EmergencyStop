@@ -30,7 +30,7 @@ void HandshakeServiceLoop(void* pvParameters) {
                     Serial.println("Sent");
                     buildPacket(&handshakePkt, MessageType::HANDSHAKE, StatusCode::OK, receivedChannel);
                     sendPacket(&handshakePkt);
-                    vTaskDelay(pdMS_TO_TICKS(500 + random(0, 250)));  // Delay between handshake packets
+                    vTaskDelay(pdMS_TO_TICKS(500 + random(0, 500)));  // Delay between handshake packets
                 }
                 data.isSynced = true;
                 while (!HC12switchChannel(receivedChannel)) {

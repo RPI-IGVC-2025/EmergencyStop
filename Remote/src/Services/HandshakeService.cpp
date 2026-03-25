@@ -17,34 +17,35 @@ void HandshakeServiceLoop(void* pvParameters) {
     for (;;) {
         if (xSemaphoreTake(xMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
             // Check for received packet from Robot
-            if(checkIncomingPacket(&pkt)) {
+            while(checkIncomingPacket(&pkt)) {
                 Serial.println("Received valid handshake packet");
                 if(pkt.channel == getDesiredChannel()) {
                     for(; !HC12switchChannel(pkt.channel);) {}
-                    vTaskDelay(pdMS_TO_TICKS(7500));
+                    xSemaphoreGive(xMutex); 
                     data.isSynced = true;
+                    vTaskDelay(pdMS_TO_TICKS(7500));
                 }
             }
 
             if (data.isSynced) {
                 // If we're synced, we can stop sending handshakes
                 setCurrentChannel(getDesiredChannel());
-                xSemaphoreGive(xMutex);  // ALWAYS give it back!
                 transitionTo(STATE_OPERATIONAL);
+                xSemaphoreGive(xMutex); 
                 vTaskDelete(NULL);
             }
             
             // Send a packet every 1 second
-            if (xTaskGetTickCount() - lastHandshakeSent > pdMS_TO_TICKS(1000)) {
+            if (xTaskGetTickCount() - lastHandshakeSent >= pdMS_TO_TICKS(1000)) {
                 Serial.println("Sent handshake packet");
                 // Send a handshake packet every 1 second
-                buildPacket(&handshakePkt, MessageType::HANDSHAKE,
-                            StatusCode::OK, desiredChannel);
+                buildPacket(&handshakePkt, MessageType::HANDSHAKE, StatusCode::OK, desiredChannel);
                 sendPacket(&handshakePkt);
                 lastHandshakeSent = xTaskGetTickCount();
             }
 
-            xSemaphoreGive(xMutex);  // ALWAYS give it back!
+            // ALWAYS give it back!
+            xSemaphoreGive(xMutex);
             //Serial.println("Loop complete");
         }
 

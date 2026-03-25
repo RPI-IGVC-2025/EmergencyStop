@@ -20,6 +20,7 @@ volatile bool OLEDup = false;
 const int STARTING_X_COORD = 63;
 
 TickType_t currentTicks, previousTicks;
+uint8_t handshakePause = 0;
 
 U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/SCL_PIN,
                                          /* data=*/SDA_PIN, /* reset=*/8);
@@ -56,7 +57,7 @@ void OLEDTask(void* pvParameters) {
     vTaskDelay(pdMS_TO_TICKS(500));  // Small delay to ensure the HC-12 response screen is visible before switching to the main screen
     clearScreen();
     vTaskDelay(pdMS_TO_TICKS(500));  // Small delay to ensure the screen is cleared before starting the main loop
-                                     
+
     Serial.println("OLED Loop Begin");
 
     for (;;) {
@@ -89,12 +90,10 @@ void drawInfoScreen() {
     drawTimeElapsed();
     drawBattery();
 
-    // Estop Text
-    u8g2.setFont(u8g2_font_6x10_tr);
-    u8g2.drawStr(7, 30, "ESTOP IDLE");
+    drawHandshake();
 
-    // EStop Icon
-    u8g2.drawXBMP(29, 38, 15, 16, IMAGE_IDLE);
+    // Estop Text
+    drawEStop();
 
     u8g2.sendBuffer();
 }
@@ -120,20 +119,52 @@ void drawNetwork() {
     }
 }
 
-void drawHandshake(bool synced) {
-    // Handshake
-    u8g2.setFont(u8g2_font_5x8_tr);
-    u8g2.drawStr(81, 29, "Handshake");
-    // Handshake hand
-    if (synced) {
-        u8g2.drawXBMP(93, 36, 17, 16, IMAGE_THUMBSUP);
-        u8g2.setFont(u8g2_font_5x7_tr);
-        u8g2.drawStr(80, 61, "Connected");
+uint8_t crosshairDelay = 0;
+uint8_t warningDelay = 0;
+
+void drawEStop() {
+    if (data.EStopActive) {
+        u8g2.setFont(u8g2_font_6x10_tr);
+        u8g2.drawStr(2, 30, "ESTOP ACTIVE");
+        if (warningDelay < 2) {
+            u8g2.drawXBMP(28, 38, 16, 16, IMAGE_WARNING);
+            warningDelay = 0;
+        }
+        warningDelay++;
+    } else if (data.EStopPrimed) {
+        u8g2.setFont(u8g2_font_6x10_tr);
+        u8g2.drawStr(2, 30, "ESTOP PRIMED");
+        u8g2.drawXBMP(23, 33, 30, 32, IMAGE_CROSSHAIR);
+        if (crosshairDelay > 3) {
+            u8g2.drawXBMP(27, 33, 22, 32, IMAGE_CROSSHAIR_SMALL);
+            if(crosshairDelay > 4);
+                crosshairDelay = 0;
+        }
+        crosshairDelay++;
     } else {
-        u8g2.drawXBMP(93, 36, 17, 16, IMAGE_HANDSHAKE);
-        // Handshake dots
-        u8g2.setFont(u8g2_font_5x7_mf);
-        u8g2.drawStr(95, 60, formatDots(xTaskGetTickCount()));
+        u8g2.setFont(u8g2_font_6x10_tr);
+        u8g2.drawStr(7, 30, "ESTOP IDLE");
+        // EStop Icon
+        u8g2.drawXBMP(29, 38, 15, 16, IMAGE_IDLE);
+    }
+}
+
+void drawHandshake() {
+    if (!data.isSynced) {
+        u8g2.setFont(u8g2_font_5x8_tr);
+        u8g2.drawStr(81, 29, "Handshake");
+        u8g2.drawXBMP(93, 35, 17, 16, IMAGE_HANDSHAKE);
+        u8g2.setFont(u8g2_font_5x7_tr);
+        u8g2.drawStr(93, 59, formatDots(xTaskGetTickCount()));
+    } else {
+        if (handshakePause < 10 && !data.heartbeatActive) {
+            u8g2.setFont(u8g2_font_5x8_tr);
+            u8g2.drawStr(81, 29, "Handshake");
+            u8g2.setFont(u8g2_font_5x7_tr);
+            u8g2.drawStr(81, 61, "Connected");
+            u8g2.drawXBMP(94, 35, 16, 16, IMAGE_THUMBSUP);
+        }
+        handshakePause++;
     }
 }
 
@@ -218,21 +249,24 @@ void drawNumberLine(int num) {
 }
 
 int getNumberLineOffset(int num) {
-    int offset = 0;
-    for (int i = 1; i <= num; i++) {
-        switch (i) {
-            case 2 ... 9:
-                offset += 18;
-                break;
-            case 10:
-                offset += 21;
-                break;
-            case 11 ... 16:
-                offset += 24;
-                break;
-        }
-    }
-    return offset;
+    // int offset = 0;
+    // for (int i = 1; i <= num; i++) {
+    //     switch (i) {
+    //         case 2 ... 9:
+    //             offset += 18;
+    //             break;
+    //         case 10:
+    //             offset += 21;
+    //             break;
+    //         case 11 ... 16:
+    //             offset += 24;
+    //             break;
+    //     }
+    // }
+    // return offset;
+    if (num < 10) return (num - 1) * 18;
+    if (num == 10) return 165;
+    if (num > 10) return 165 + (num - 10) * 24;
 }
 
 void initSequence() {

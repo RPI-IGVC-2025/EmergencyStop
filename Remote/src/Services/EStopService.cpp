@@ -1,18 +1,49 @@
+#include "EStopService.h"
+
 #include <Arduino.h>
 
-#include "EStopService.h"
+#include "Algos/PacketBuilder.h"
+#include "Handlers/RadioHandler.h"
 #include "System.h"
 
-void EStopService_Init() {    
+uint8_t EStopLowCounts = 0;
+TickType_t previousTime;
+
+void EStopService_Init() {
     pinMode(ESTOP_PIN, INPUT_PULLUP);
+    previousTime = 0;
+    data.EStopPrimed = true;
 }
 
 void EStopServiceLoop(void* pvParameters) {
-    for(;;) {
-        if(digitalRead(ESTOP_PIN) == LOW) {
-            Serial.println("EStopPressed");
-        }
+    Packet pkt;
+    for (;;) {
+        if (!data.EStopActive) {
+            previousTime = xTaskGetTickCount();
+            if (digitalRead(ESTOP_PIN) == LOW) {
+                EStopLowCounts++;
+            } else {
+                EStopLowCounts = 0;
+            }
 
-        vTaskDelay(pdMS_TO_TICKS(1));
+            if (EStopLowCounts > 3) {
+                triggerEStop();
+            }
+        } else {
+            if (xSemaphoreTake(xMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+                if (xTaskGetTickCount() - previousTime >= pdMS_TO_TICKS(250)) {
+                    buildPacket(&pkt, MessageType::ESTOP, StatusCode::BUTTON_PRESS);
+                    sendPacket(&pkt);
+                    Serial.println("Sent ESTOP Packet");
+                }
+                xSemaphoreGive(xMutex);
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
+}
+
+void triggerEStop() {
+    data.EStopActive = true;
+    transitionTo(STATE_ESTOP_ACTIVE);
 }

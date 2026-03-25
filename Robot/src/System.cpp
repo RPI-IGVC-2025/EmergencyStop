@@ -49,6 +49,8 @@ void transitionTo(SystemState newState) {
 
     // 2. Start the NEW state
     switch (robotState) {
+        case STATE_ESTOP_ACTIVE:
+            break;
         case STATE_HANDSHAKING:
             // Instead of an Init function that stays alive,
             // just start the task here.

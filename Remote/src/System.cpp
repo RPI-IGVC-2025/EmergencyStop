@@ -16,6 +16,8 @@ static TaskHandle_t SystemTask;
 SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
 
 SystemData data = {
+    .EStopActive = false,
+    .EStopPrimed = false,
     .batteryMv = 9000,  // Start fully charged
     .channelLocked = false,
     .isSynced = false,
@@ -71,6 +73,8 @@ void transitionTo(SystemState newState) {
 
     // 2. Start the NEW state
     switch (remoteState) {
+        case STATE_ESTOP_ACTIVE:
+            break;
         case STATE_SELECTING_CHANNEL:
             SelectChannelService_Init();
             xTaskCreatePinnedToCore(SelectChannelServiceLoop, "ChannelSelect", 4096, NULL, 5, &SelectChannelServiceTask, 1);

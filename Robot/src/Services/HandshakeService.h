@@ -9,6 +9,6 @@ void HandshakeServiceLoop(void* pvParameters);
 static TaskHandle_t HandshakeServiceTask;
 
 void HandshakeService_Init();
-bool checkIncomingPacket(Packet* pkt);
+bool checkHandshakePacket(Packet* pkt);
 
 #endif

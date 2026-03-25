@@ -16,6 +16,7 @@ const int SET_PIN = 5;
 RadioState radioState = {.desiredChannel = 1, .currentChannel = 1};
 
 void Radio_Init() {
+    HC12.setRxBufferSize(1024);
     HC12.begin(9600, SERIAL_8N1, hc12_rx, hc12_tx);
     pinMode(SET_PIN, OUTPUT);
     digitalWrite(SET_PIN, HIGH);
@@ -25,6 +26,17 @@ void Radio_Init() {
         delay(300);
     }  // Default to channel 1 on startup
     data.radioReady = true;
+
+    HC12.onReceive([]() {
+        // We use the internal UART functions to check for errors
+        size_t available = HC12.available();
+        
+        // This is a bit advanced, but if the UART hardware detects 
+        // a framing error, it often results in a "0" or "Break" condition.
+        if (HC12.peek() == -1 && available > 0) {
+            Serial.println("!!! UART HARDWARE ERROR DETECTED !!!");
+        }
+    }, true); // The 'true' tells it to trigger only on completed events
 }
 
 bool getNextFrame(Packet* outPkt) {
@@ -36,6 +48,7 @@ bool getNextFrame(Packet* outPkt) {
     // 2. THE INCINERATOR: Burn ALL trash until a Sync Byte is found
     // Notice this is a WHILE loop, and it doesn't care about sizeof(Packet)
     while (HC12.available() > 0 && HC12.peek() != SYNC_BYTE) {
+        Serial.println("R!");
         HC12.read(); // Throw it away
     }
 
@@ -140,6 +153,12 @@ bool getNextFrame(Packet* outPkt) {
 void sendPacket(Packet* pkt) {
     uint8_t buffer[sizeof(Packet)];
     memcpy(buffer, pkt, sizeof(Packet));
+
+    for(int i = 0; i<sizeof(Packet); i++) {
+        Serial.print(buffer[i]);
+        Serial.print(", ");
+    }
+    Serial.println();
 
     HC12.write(buffer, sizeof(Packet));
 

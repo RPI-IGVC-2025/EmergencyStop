@@ -25,6 +25,8 @@ void transitionTo(SystemState newState);
 extern SystemState remoteState;
 
 typedef struct SystemData {
+  volatile bool EStopActive;
+  volatile bool EStopPrimed;
   volatile uint32_t batteryMv;
   volatile bool channelLocked;
   volatile bool isSynced;

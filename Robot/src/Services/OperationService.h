@@ -9,6 +9,7 @@ void OperationServiceLoop(void* pvParameters);
 static TaskHandle_t OperationServiceTask;
 
 void OperationService_Init();
+bool checkIncomingPacket(Packet* pkt);
 
 
 #endif

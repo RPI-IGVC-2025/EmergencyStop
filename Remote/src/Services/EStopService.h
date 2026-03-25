@@ -7,6 +7,8 @@
 void EStopService_Init();
 void EStopServiceLoop(void* pvParameters);
 
+void triggerEStop();
+
 static TaskHandle_t EStopServiceTask;
 
 #endif
