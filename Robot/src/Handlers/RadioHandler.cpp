@@ -129,8 +129,8 @@ char* HC12sendCommand(char* command) {
         return strdup(response.c_str());
     } else {
         Serial.println("HC12 SILENT - No response.");
-        return strdup("");
     }
+    return strdup("");
 }
 
 uint16_t getCurrentChannel() {

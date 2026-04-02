@@ -80,3 +80,14 @@ uint32_t generateNonce() {
   }
   return noncePool[nonceIndex++];
 }
+
+void printPacket(Packet* pkt) {
+    uint8_t arr[sizeof(Packet)];
+    memcpy(arr, pkt, sizeof(Packet));
+
+    for(int i = 0; i < sizeof(Packet); i++) {
+        Serial.print(arr[i]);
+        Serial.print(", ");
+    }
+    Serial.println();
+}

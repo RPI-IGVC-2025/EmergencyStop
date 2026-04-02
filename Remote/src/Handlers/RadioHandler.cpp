@@ -27,16 +27,22 @@ void Radio_Init() {
     }  // Default to channel 1 on startup
     data.radioReady = true;
 
-    HC12.onReceive([]() {
-        // We use the internal UART functions to check for errors
-        size_t available = HC12.available();
+    // HC12.onReceive([]() {
+    //     // We use the internal UART functions to check for errors
+    //     size_t available = HC12.available();
         
-        // This is a bit advanced, but if the UART hardware detects 
-        // a framing error, it often results in a "0" or "Break" condition.
-        if (HC12.peek() == -1 && available > 0) {
-            Serial.println("!!! UART HARDWARE ERROR DETECTED !!!");
-        }
-    }, true); // The 'true' tells it to trigger only on completed events
+    //     // This is a bit advanced, but if the UART hardware detects 
+    //     // a framing error, it often results in a "0" or "Break" condition.
+    //     if (HC12.peek() == -1 && available > 0) {
+    //         Serial.println("!!! UART HARDWARE ERROR DETECTED !!!");
+    //     }
+    // }, true); // The 'true' tells it to trigger only on completed events
+}
+
+void flushHC12() {
+    while (HC12.available()) {
+        HC12.read();
+    }
 }
 
 bool getNextFrame(Packet* outPkt) {
@@ -51,6 +57,8 @@ bool getNextFrame(Packet* outPkt) {
         Serial.println("R!");
         HC12.read(); // Throw it away
     }
+
+    vTaskDelay(pdMS_TO_TICKS(100)); // Short delay to allow the rest of the packet to arrive after the sync byte
 
     // 3. Check what's left. If we burned the trash and don't have a full packet yet, wait.
     if (HC12.available() < sizeof(Packet)) {
@@ -214,6 +222,7 @@ char* HC12sendCommand(char* command) {
     } else {
         Serial.println("HC12 SILENT - No response.");
     }
+    return strdup("");
 }
 
 uint8_t getCurrentChannel() { return radioState.currentChannel; }

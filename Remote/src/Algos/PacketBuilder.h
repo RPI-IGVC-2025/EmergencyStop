@@ -23,8 +23,9 @@ typedef struct __attribute__((packed)) Packet {
 
 enum MessageType {
   ESTOP = 'S',
-  HEARTBEAT = 'C',
-  HANDSHAKE = 'H'
+  HEARTBEAT = 'M',
+  HANDSHAKE = 'H',
+  CONFIRM = 'C'
   // ...
 };
 

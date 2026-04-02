@@ -23,8 +23,9 @@ typedef struct __attribute__((packed)) Packet {
 
 enum MessageType {
   ESTOP = 'S',
-  HEARTBEAT = 'C',
-  HANDSHAKE = 'H'
+  HEARTBEAT = 'M',
+  HANDSHAKE = 'H',
+  CONFIRM = 'C'
   // ...
 };
 
@@ -40,5 +41,6 @@ void buildPacket(Packet* pkt, MessageType type, StatusCode code);
 
 void resetNonces();
 uint32_t generateNonce();
+void printPacket(Packet* pkt);
 
 #endif

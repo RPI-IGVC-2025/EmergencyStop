@@ -36,7 +36,8 @@ void HandshakeServiceLoop(void* pvParameters) {
             }
             
             // Send a packet every 1 second
-            if (xTaskGetTickCount() - lastHandshakeSent >= pdMS_TO_TICKS(1000)) {
+            if (xTaskGetTickCount() - lastHandshakeSent >= pdMS_TO_TICKS(2000)) {
+                vTaskDelay(pdMS_TO_TICKS(100));
                 Serial.println("Sent handshake packet");
                 // Send a handshake packet every 1 second
                 buildPacket(&handshakePkt, MessageType::HANDSHAKE, StatusCode::OK, desiredChannel);
@@ -52,6 +53,7 @@ void HandshakeServiceLoop(void* pvParameters) {
         vTaskDelay(pdMS_TO_TICKS(50));  // Delay for 50ms to prevent task hogging
     }
 }
+
 
 bool checkIncomingPacket(Packet* pkt) {
     if(!getNextFrame(pkt)) return false;

@@ -137,7 +137,7 @@ void drawEStop() {
         u8g2.drawXBMP(23, 33, 30, 32, IMAGE_CROSSHAIR);
         if (crosshairDelay > 3) {
             u8g2.drawXBMP(27, 33, 22, 32, IMAGE_CROSSHAIR_SMALL);
-            if(crosshairDelay > 4);
+            if(crosshairDelay > 5);
                 crosshairDelay = 0;
         }
         crosshairDelay++;

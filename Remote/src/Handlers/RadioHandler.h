@@ -22,4 +22,6 @@ void setCurrentChannel(uint8_t newChannel);
 void sendPacket(Packet* pkt);
 void clearPacket(Packet* pkt);
 
+void flushHC12();
+
 #endif
