@@ -37,6 +37,7 @@ void Radio_Init() {
     //         Serial.println("!!! UART HARDWARE ERROR DETECTED !!!");
     //     }
     // }, true); // The 'true' tells it to trigger only on completed events
+    resetNonces();
 }
 
 void flushHC12() {

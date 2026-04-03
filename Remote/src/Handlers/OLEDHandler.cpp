@@ -92,6 +92,8 @@ void drawInfoScreen() {
 
     drawHandshake();
 
+    drawHeartbeat();
+
     // Estop Text
     drawEStop();
 
@@ -137,8 +139,9 @@ void drawEStop() {
         u8g2.drawXBMP(23, 33, 30, 32, IMAGE_CROSSHAIR);
         if (crosshairDelay > 3) {
             u8g2.drawXBMP(27, 33, 22, 32, IMAGE_CROSSHAIR_SMALL);
-            if(crosshairDelay > 5);
-                crosshairDelay = 0;
+            if (crosshairDelay > 5)
+                ;
+            crosshairDelay = 0;
         }
         crosshairDelay++;
     } else {
@@ -147,6 +150,22 @@ void drawEStop() {
         // EStop Icon
         u8g2.drawXBMP(29, 38, 15, 16, IMAGE_IDLE);
     }
+}
+
+void drawHeartbeat() {
+    if (data.heartbeatActive) {
+        u8g2.setFont(u8g2_font_5x8_tr);
+        u8g2.drawStr(80, 29, "Heartbeat");
+        u8g2.drawXBMP(95, 35, 15, 13, IMAGE_HEART);
+        u8g2.setFont(u8g2_font_6x12_tr);
+        u8g2.drawStr(100 - (3*(floor(log10(data.heartbeatCount)))), 60, formatNumber(data.heartbeatCount));
+    }
+}
+
+char* formatNumber(int num) {
+    static char buffer[9];
+    snprintf(buffer, sizeof(buffer), "%d", num);
+    return buffer;
 }
 
 void drawHandshake() {
@@ -267,6 +286,7 @@ int getNumberLineOffset(int num) {
     if (num < 10) return (num - 1) * 18;
     if (num == 10) return 165;
     if (num > 10) return 165 + (num - 10) * 24;
+    return 0;  // Default case (should never reach here)
 }
 
 void initSequence() {

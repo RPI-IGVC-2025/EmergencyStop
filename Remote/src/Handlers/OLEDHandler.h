@@ -48,10 +48,12 @@ void drawTimeElapsed();
 void drawBattery();
 void drawHandshake();
 void drawEStop();
+void drawHeartbeat();
 
 
 char* formatTime(unsigned long seconds);
 char* formatDots(TickType_t ticks);
+char* formatNumber(int num);
 
 void changeOLEDUpdateDelay(int newDelayMS);
 

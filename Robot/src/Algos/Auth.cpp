@@ -6,10 +6,11 @@
 
 uint16_t usedMask = 0;
 uint32_t prevMinNonce = 0;
+bool currentHashValid = false;
 
 bool verifyPacket(Packet *pkt)
-{
-    return verifyOwner(pkt) && verifySequence(pkt) && verifyNonce(pkt) && verifyHash(pkt);
+{   
+    return verifyOwner(pkt) && verifySequence(pkt) && verifyNonce(pkt) && (currentHashValid = verifyHash(pkt));
 }
 
 bool verifySequence(Packet *pkt)
@@ -100,3 +101,7 @@ bool verifyOwner(Packet *pkt) {
     }
     return false;
 }
+
+bool getCurrentHashValid() {
+    return currentHashValid;
+}   

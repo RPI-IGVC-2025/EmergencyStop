@@ -32,6 +32,7 @@ typedef struct SystemData {
   volatile bool isSynced;
   volatile bool isEstopped;
   volatile bool heartbeatActive;
+  volatile uint32_t heartbeatCount;
   volatile unsigned long uptimeSeconds;
   volatile bool OLEDActive;
   volatile uint16_t potChannel;

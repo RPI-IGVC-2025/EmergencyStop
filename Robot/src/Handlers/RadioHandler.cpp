@@ -27,6 +27,7 @@ void Radio_Init() {
         delay(300);
     }  // Default to channel 1 on startup
     data.radioReady = true;
+    resetNonces();
 }
 
 bool getNextFrame(Packet* outPkt) {

@@ -5,8 +5,9 @@
 #include <task.h>
 
 #include "Algos/Auth.h"
-#include "Handlers/RadioHandler.h"
+#include "Handlers/EStopHandler.h"
 #include "Handlers/HeartbeatHandler.h"
+#include "Handlers/RadioHandler.h"
 #include "System.h"
 
 void OperationService_Init() {
@@ -18,24 +19,25 @@ void OperationServiceLoop(void* pvParameters) {
     MessageType type;
     for (;;) {
         if (xSemaphoreTake(xMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-            if(checkIncomingPacket(&pkt)) {
+            if (checkIncomingPacket(&pkt)) {
                 uint8_t buffer[sizeof(Packet)];
-                memcpy(buffer,&pkt,sizeof(Packet));
+                memcpy(buffer, &pkt, sizeof(Packet));
 
-                for(int i = 0; i < sizeof(Packet); i++) {
+                for (int i = 0; i < sizeof(Packet); i++) {
                     Serial.print(buffer[i]);
                     Serial.print(", ");
                 }
                 Serial.println();
 
-                if(pkt.command == MessageType::ESTOP) {
+                if (pkt.command == MessageType::ESTOP) {
                     Serial.println("RECIEVED ESTOP PACKET!");
+                    triggerEStop();
                 }
-                if(pkt.command == MessageType::HEARTBEAT) {
+                if (pkt.command == MessageType::HEARTBEAT) {
                     Serial.println("Received Heartbeat Packet!");
                     updateLastHeartbeatTime(xTaskGetTickCount());
                 }
-                if(pkt.command == MessageType::HANDSHAKE) {
+                if (pkt.command == MessageType::HANDSHAKE) {
                     // Triger Handshake for channel change
                 }
             }
@@ -49,5 +51,21 @@ void OperationServiceLoop(void* pvParameters) {
 bool checkIncomingPacket(Packet* pkt) {
     if (!getNextFrame(pkt)) return false;
     if (!verifyPacket(pkt)) return false;
+    swissCheeseCheck(pkt, getCurrentHashValid());
     return true;
+}
+
+uint8_t EStopVote = 0;
+
+void swissCheeseCheck(Packet* pkt, bool hashValid) {
+    if (!hashValid) {
+        if (pkt->command == MessageType::ESTOP) {
+            EStopVote++;
+            if (EStopVote >= 2) {
+                triggerEStop();
+            }
+        }
+    } else {
+        EStopVote = 0;
+    }
 }

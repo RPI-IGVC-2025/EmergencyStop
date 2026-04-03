@@ -20,6 +20,14 @@ void HandshakeServiceLoop(void* pvParameters) {
             while(checkIncomingPacket(&pkt)) {
                 Serial.println("Received valid handshake packet");
                 if(pkt.channel == getDesiredChannel()) {
+                    vTaskDelay(pdMS_TO_TICKS(500));
+
+                    // Send confirm packet.
+                    Serial.println("Sending confirm packet");
+                    buildPacket(&handshakePkt, MessageType::CONFIRM, StatusCode::OK, pkt.channel);
+                    sendPacket(&handshakePkt);
+
+                    vTaskDelay(pdMS_TO_TICKS(500));
                     for(; !HC12switchChannel(pkt.channel);) {}
                     xSemaphoreGive(xMutex); 
                     data.isSynced = true;

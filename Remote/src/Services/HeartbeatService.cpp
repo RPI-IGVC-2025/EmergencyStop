@@ -23,6 +23,7 @@ void HeartbeatServiceLoop(void* pvParameters) {
                 buildPacket(&heartbeatPkt, MessageType::HEARTBEAT, StatusCode::OK);
                 sendPacket(&heartbeatPkt);
                 heartbeatState.lastHeartbeatPacket = xTaskGetTickCount();
+                data.heartbeatCount++;
                 Serial.println("Sent Heartbeat Packet");
             }
             xSemaphoreGive(xMutex); 

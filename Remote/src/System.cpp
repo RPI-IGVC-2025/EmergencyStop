@@ -23,10 +23,12 @@ SystemData data = {
     .isSynced = false,
     .isEstopped = false,
     .heartbeatActive = false,
+    .heartbeatCount = 0,
     .uptimeSeconds = 0,
     .OLEDActive = false,
     .potChannel = 1,
-    .radioReady = false};
+    .radioReady = false
+};
 
 SystemState remoteState = STATE_BOOTING;
 

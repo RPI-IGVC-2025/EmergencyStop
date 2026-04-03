@@ -9,4 +9,6 @@ bool verifyNonce(Packet* pkt);
 bool verifyHash(Packet* pkt);
 bool verifyOwner(Packet* pkt);
 
+bool getCurrentHashValid();
+
 #endif
