@@ -36,11 +36,16 @@ void OperationServiceLoop(void* pvParameters) {
                 if (pkt.command == MessageType::HEARTBEAT) {
                     Serial.println("Received Heartbeat Packet!");
                     updateLastHeartbeatTime(xTaskGetTickCount());
+                    setHeartbeatActive();
                 }
                 if (pkt.command == MessageType::HANDSHAKE) {
                     // Triger Handshake for channel change
                 }
             }
+        }
+
+        if(getHeartbeatActive()) {
+            checkHeartbeatTimeout();
         }
 
         xSemaphoreGive(xMutex);
@@ -50,8 +55,12 @@ void OperationServiceLoop(void* pvParameters) {
 
 bool checkIncomingPacket(Packet* pkt) {
     if (!getNextFrame(pkt)) return false;
-    if (!verifyPacket(pkt)) return false;
-    swissCheeseCheck(pkt, getCurrentHashValid());
+    if (!verifyPacket(pkt)) {
+        swissCheeseCheck(pkt, getCurrentHashValid());
+        return false;
+    } else {
+        swissCheeseCheck(pkt, true);
+    }
     return true;
 }
 
@@ -59,13 +68,24 @@ uint8_t EStopVote = 0;
 
 void swissCheeseCheck(Packet* pkt, bool hashValid) {
     if (!hashValid) {
+        Serial.println("Boolean works!");
         if (pkt->command == MessageType::ESTOP) {
             EStopVote++;
+            Serial.println(EStopVote);
             if (EStopVote >= 2) {
+                Serial.println("Swiss Cheese Check Failed: Multiple ESTOP Packets with Invalid Hash");
                 triggerEStop();
             }
         }
     } else {
         EStopVote = 0;
+    }
+}
+
+void checkHeartbeatTimeout() {
+    TickType_t currentTime = xTaskGetTickCount();
+    if (currentTime - getLastHeartbeatTime() > pdMS_TO_TICKS(5000)) {
+        Serial.println("Heartbeat Timeout!");
+        triggerEStop();
     }
 }

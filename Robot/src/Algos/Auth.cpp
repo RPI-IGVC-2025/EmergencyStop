@@ -1,5 +1,7 @@
-#include <Arduino.h>
 #include "Auth.h"
+
+#include <Arduino.h>
+
 #include "Blake.h"
 #include "PacketBuilder.h"
 #include "System.h"
@@ -8,38 +10,31 @@ uint16_t usedMask = 0;
 uint32_t prevMinNonce = 0;
 bool currentHashValid = false;
 
-bool verifyPacket(Packet *pkt)
-{   
-    return verifyOwner(pkt) && verifySequence(pkt) && verifyNonce(pkt) && (currentHashValid = verifyHash(pkt));
+bool verifyPacket(Packet* pkt) {
+    return verifyOwner(pkt) && verifySequence(pkt) && verifyNonce(pkt) && verifyHash(pkt);
 }
 
-bool verifySequence(Packet *pkt)
-{
+bool verifySequence(Packet* pkt) {
     static uint32_t lastSeqNum = 0;
-    if (pkt->seqNum <= lastSeqNum)
-    {
-        return false; // Reject if sequence number is not strictly increasing
+    if (pkt->seqNum <= lastSeqNum) {
+        return false;  // Reject if sequence number is not strictly increasing
         Serial.println("Sequence number check failed");
     }
     lastSeqNum = pkt->seqNum;
     return true;
 }
 
-bool verifyNonce(Packet *pkt)
-{
-
+bool verifyNonce(Packet* pkt) {
     // 1. Determine the base of the current 10-block range
     uint32_t currentMinNonce = (pkt->seqNum / 10) * 10;
 
     // 2. If we moved to a new block, reset the tracking mask
-    if (currentMinNonce > prevMinNonce)
-    {
+    if (currentMinNonce > prevMinNonce) {
         usedMask = 0;
         prevMinNonce = currentMinNonce;
     }
     // Safety: If for some godforsaken reason we get an old block, reject it
-    else if (currentMinNonce < prevMinNonce)
-    {
+    else if (currentMinNonce < prevMinNonce) {
         Serial.println("Nonce block check failed");
         return false;
     }
@@ -48,32 +43,28 @@ bool verifyNonce(Packet *pkt)
     int32_t index = (int32_t)pkt->nonce - (int32_t)currentMinNonce;
 
     // 4. Bounds Check: Ensure the nonce is actually within the 10-block range
-    if (index < 0 || index >= 10)
-    {
+    if (index < 0 || index >= 10) {
         Serial.println("Out of bounds nonce");
-        return false; // Out of bounds nonce
+        return false;  // Out of bounds nonce
     }
 
     // 5. Bitmask Check: (1 << index) creates the "stencil" for this specific nonce
-    if (!(usedMask & (1 << index)))
-    {
+    if (!(usedMask & (1 << index))) {
         // If the bit was 0 (NOT used), mark it as used and return 1 (Valid)
         usedMask |= (1 << index);
         return true;
-    }
-    else
-    {
+    } else {
         // Bit was already 1, this is a replay
         Serial.println("Nonce replay detected");
         return false;
     }
 }
 
-bool verifyHash(Packet *pkt) {
+bool verifyHash(Packet* pkt) {
     uint8_t recievedHash[32];
     memcpy(recievedHash, pkt->hash, 32);
 
-    memset(pkt->hash, 0, 32); // Clear the hash field for recomputation
+    memset(pkt->hash, 0, 32);  // Clear the hash field for recomputation
 
     // Reconstruct the data that was hashed: command + seqNum + nonce
     generateBLAKE(pkt);
@@ -81,21 +72,22 @@ bool verifyHash(Packet *pkt) {
     // Compute the BLAKE2s hash of the reconstructed data
 
     // Compare the computed hash with the hash in the packet
-    if(memcmp(recievedHash, pkt->hash, 32) == 0) {
-        return true; // Hash matches, packet is authentic
+    if (memcmp(recievedHash, pkt->hash, 32) == 0) {
+        currentHashValid = true;
     } else {
         Serial.println("Hash verification failed");
-        return false; // Hash does not match, packet may be tampered with
+        currentHashValid = false;
     }
+    return currentHashValid;
 }
 
-bool verifyOwner(Packet *pkt) {
-    if(!data.IS_REMOTE) {
-        if(pkt->ownerID == OWNER_ID_REMOTE) {
+bool verifyOwner(Packet* pkt) {
+    if (!data.IS_REMOTE) {
+        if (pkt->ownerID == OWNER_ID_REMOTE) {
             return true;
         }
     } else {
-        if(pkt->ownerID == OWNER_ID_ROBOT) {
+        if (pkt->ownerID == OWNER_ID_ROBOT) {
             return true;
         }
     }
@@ -104,4 +96,4 @@ bool verifyOwner(Packet *pkt) {
 
 bool getCurrentHashValid() {
     return currentHashValid;
-}   
+}

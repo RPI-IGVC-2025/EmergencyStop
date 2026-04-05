@@ -12,5 +12,6 @@ void OperationService_Init();
 bool checkIncomingPacket(Packet* pkt);
 
 void swissCheeseCheck(Packet* pkt, bool hashValid);
+void checkHeartbeatTimeout();
 
 #endif

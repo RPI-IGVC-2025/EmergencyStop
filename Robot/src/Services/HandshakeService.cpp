@@ -28,7 +28,7 @@ void HandshakeServiceLoop(void* pvParameters) {
                     confirmedHandshake = true;
                     receivedChannel = handshakePkt.channel;
                     Serial.println("Received handshake packet from remote!");
-                    vTaskDelay(pdMS_TO_TICKS(50));  // Short delay before responding
+                    vTaskDelay(pdMS_TO_TICKS(100));  // Short delay before responding
                 }
                 if(handshakePkt.command == MessageType::CONFIRM && confirmedHandshake){
                     secondHandshake = true;

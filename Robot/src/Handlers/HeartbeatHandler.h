@@ -7,9 +7,12 @@
 
 struct HeartbeatData {
     volatile TickType_t lastHeartbeatTime;
+    volatile bool heartbeatActive;
 };
 
 void updateLastHeartbeatTime(TickType_t newTime);
 TickType_t getLastHeartbeatTime();
+bool getHeartbeatActive();
+void setHeartbeatActive();
 
 #endif
