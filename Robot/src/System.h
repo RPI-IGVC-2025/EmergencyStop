@@ -30,4 +30,6 @@ extern SystemState robotState;
 
 void transitionTo(SystemState newState);
 
+const int ESTOP_PIN = 7;
+
 #endif

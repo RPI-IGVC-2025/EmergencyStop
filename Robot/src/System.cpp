@@ -30,6 +30,9 @@ void System_Init() {
         5,               /* Medium Priority out of all 3 tasks */
         &SystemTask,     /* Task handle to keep track of created task */
         1);              /* pin task to core 0 */
+
+    pinMode(ESTOP_PIN, OUTPUT);
+    digitalWrite(ESTOP_PIN, LOW); // Ensure E-Stop pin is LOW at startup
 }
 
 void SystemLoop(void* pvParameters) {
@@ -50,6 +53,7 @@ void transitionTo(SystemState newState) {
     // 2. Start the NEW state
     switch (robotState) {
         case STATE_ESTOP_ACTIVE:
+
             break;
         case STATE_HANDSHAKING:
             // Instead of an Init function that stays alive,
