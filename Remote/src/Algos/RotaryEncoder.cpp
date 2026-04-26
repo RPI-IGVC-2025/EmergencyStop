@@ -19,15 +19,20 @@ void rotaryEncoder_Init() {
 */
 // Thank you to max wolf for this rotary encoder code.
 
-int getRotaryPos() {
+void setRotaryPos() {
   n = digitalRead(encoder0PinA);
   if ((encoder0PinALast == LOW) && (n == HIGH)) {
     if (digitalRead(encoder0PinB) == LOW) {
       encoder0Pos--;
+      if (encoder0Pos < 1) encoder0Pos = 16;
     } else {
       encoder0Pos++;
+      if (encoder0Pos > 16) encoder0Pos = 1;
     }
   }
   encoder0PinALast = n;
+}
+
+int getRotaryPos() {
   return encoder0Pos;
 }

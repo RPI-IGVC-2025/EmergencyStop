@@ -6,6 +6,7 @@ const int encoder0PinA = 16; // ESP32 pin GPIO25 connected to the rotary encoder
 const int encoder0PinB  = 15; // ESP32 pin GPIO26 connected to the rotary encoder's DT pin
 
 void rotaryEncoder_Init();
+void setRotaryPos();
 int getRotaryPos();
 
 #endif

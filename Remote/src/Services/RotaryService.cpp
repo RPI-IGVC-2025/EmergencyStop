@@ -4,17 +4,13 @@
 
 #include "Algos/RotaryEncoder.h"
 
-int rotaryCount = 0;
-int* rotaryCnt = &rotaryCount;
-
 void RotaryService_Init() {
     rotaryEncoder_Init();
 }
 
 void RotaryServiceLoop(void* pvParameters) {
     for (;;) {
-        rotaryCount = getRotaryPos();
-        Serial.println(rotaryCount);
+        setRotaryPos();
         vTaskDelay(pdMS_TO_TICKS(2));
     }
 }

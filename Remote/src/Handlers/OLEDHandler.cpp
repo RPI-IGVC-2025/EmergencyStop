@@ -10,6 +10,8 @@
 #include "Services/ChannelService.h"
 #include "System.h"
 
+#include "Algos/RotaryEncoder.h"
+
 void OLEDTask(void* pvParameters);
 
 const int SDA_PIN = 1;
@@ -225,6 +227,7 @@ void drawChannelSelectScreen() {
     char strNum[3];
 
     if (data.channelLocked) {
+        int rotaryPos = getRotaryPos();
         oledState.channelSelectionActive = false;  // Exit channel selection if locked
         u8g2.setFont(u8g2_font_t0_14_tr);
         u8g2.drawStr(13, 12, "Channel Locked");
@@ -233,8 +236,8 @@ void drawChannelSelectScreen() {
         u8g2.drawFrame(53, 23, 26, 20);
 
         u8g2.setFont(u8g2_font_t0_11_tr);
-        snprintf(strNum, sizeof(strNum), "%d", data.potChannel);
-        u8g2.drawStr((data.potChannel > 9 ? 60 : 63), 37, strNum);
+        snprintf(strNum, sizeof(strNum), "%d", rotaryPos);
+        u8g2.drawStr((rotaryPos > 9 ? 60 : 63), 37, strNum);
 
         u8g2.drawStr(38, 57, "Confirmed");
 
@@ -245,7 +248,7 @@ void drawChannelSelectScreen() {
     }
 
     // Number line
-    drawNumberLine(data.potChannel);
+    drawNumberLine(getRotaryPos());
 
     // Static text
     u8g2.setFont(u8g2_font_t0_14_tr);

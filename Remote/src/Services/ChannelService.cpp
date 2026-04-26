@@ -19,7 +19,7 @@ void SelectChannelService_Init() {
 }
 
 void SelectChannelServiceLoop(void* pvParameters) {
-    int lastSeenADC = data.potChannel;
+    int lastSeenSel = getRotaryPos();
     bool firstPressDetected = false;
     bool firstPressReleased = false; 
 
@@ -27,14 +27,14 @@ void SelectChannelServiceLoop(void* pvParameters) {
     Serial.println("SelectChannelService started");
 
     for (;;) {
-        int currentADC = data.potChannel;
+        int currentSel = getRotaryPos();
         bool isButtonPressed = (digitalRead(SELECTION_PIN) == LOW);
 
         // Dialed turned, reset button
-        if (abs(currentADC - lastSeenADC) > 0) {
+        if (abs(currentSel - lastSeenSel) > 0) {
             firstPressDetected = false;
             firstPressReleased = false;
-            lastSeenADC = currentADC;
+            lastSeenSel = currentSel;
         }
 
         // gates
@@ -55,11 +55,11 @@ void SelectChannelServiceLoop(void* pvParameters) {
         else {
             // STEP 3: Wait for the SECOND press to lock it in
             if (isButtonPressed) {
-                setDesiredChannel(currentADC);
+                setDesiredChannel(currentSel);
                 data.channelLocked = true;
                 changeOLEDUpdateDelay(1000);
                 
-                Serial.printf("Channel %d confirmed and locked!\n", currentADC);
+                Serial.printf("Channel %d confirmed and locked!\n", currentSel);
                 vTaskDelay(pdMS_TO_TICKS(5000));
                 transitionTo(STATE_HANDSHAKING);
                 vTaskDelete(NULL);
@@ -69,7 +69,7 @@ void SelectChannelServiceLoop(void* pvParameters) {
         // Update the OLED status (firstPressReleased means the popup is visible/armed)
         channelServiceStatus.confirmSelection = firstPressReleased;
         
-        lastSeenADC = currentADC;
+        lastSeenSel = currentSel;
         vTaskDelay(pdMS_TO_TICKS(25)); 
     }
 }

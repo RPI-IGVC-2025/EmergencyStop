@@ -8,6 +8,6 @@ static TaskHandle_t RotaryServiceTask;
 void RotaryService_Init();
 void RotaryServiceLoop(void* pvParameters);
 
-extern int* rotaryCnt;
+
 
 #endif
