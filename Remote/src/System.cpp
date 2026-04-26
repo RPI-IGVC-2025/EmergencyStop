@@ -10,6 +10,7 @@
 #include "Services/EStopService.h"
 #include "Services/HandshakeService.h"
 #include "Services/HeartbeatService.h"
+#include "Services/RotaryService.h"
 
 static TaskHandle_t SystemTask;
 
@@ -38,7 +39,7 @@ void System_Init() {
         "SystemTask", /* name of task. */
         4096,         /* Stack size */
         NULL,
-        5,           /* Medium Priority out of all 3 tasks */
+        2,           /* Medium Priority out of all 3 tasks */
         &SystemTask, /* Task handle to keep track of created task */
         0);          /* pin task to core 0 */
 }
@@ -79,20 +80,23 @@ void transitionTo(SystemState newState) {
             break;
         case STATE_SELECTING_CHANNEL:
             SelectChannelService_Init();
-            xTaskCreatePinnedToCore(SelectChannelServiceLoop, "ChannelSelect", 4096, NULL, 5, &SelectChannelServiceTask, 1);
+            xTaskCreatePinnedToCore(RotaryServiceLoop, "RotarySelect", 2048, NULL, 3, &RotaryServiceTask, 0);
+            xTaskCreatePinnedToCore(SelectChannelServiceLoop, "ChannelSelect", 4096, NULL, 3, &SelectChannelServiceTask, 1);
             break;
         case STATE_HANDSHAKING:
+            vTaskDelete(&RotaryServiceTask);
             // Instead of an Init function that stays alive,
             // just start the task here.
             HandshakeService_Init();
-            xTaskCreatePinnedToCore(HandshakeServiceLoop, "Handshake", 4096, NULL, 5, &HandshakeServiceTask, 1);
+            xTaskCreatePinnedToCore(HandshakeServiceLoop, "Handshake", 4096, NULL, 3, &HandshakeServiceTask, 1);
             break;
 
         case STATE_OPERATIONAL:
+            vTaskDelete(&RotaryServiceTask);
             EStopService_Init();
             HeartbeatService_Init();
-            xTaskCreatePinnedToCore(HeartbeatServiceLoop, "Heartbeat", 2048, NULL, 6, &HeartbeatServiceTask, 1);
-            xTaskCreatePinnedToCore(EStopServiceLoop, "EStop", 2048, NULL, 7, &EStopServiceTask, 1);
+            xTaskCreatePinnedToCore(HeartbeatServiceLoop, "Heartbeat", 2048, NULL, 3, &HeartbeatServiceTask, 1);
+            xTaskCreatePinnedToCore(EStopServiceLoop, "EStop", 2048, NULL, 5, &EStopServiceTask, 1);
             break;
     }
 }

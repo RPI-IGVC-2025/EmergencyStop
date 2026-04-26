@@ -37,9 +37,10 @@ void OLED_Init() {
         OLEDTask,         /* Task function. */
         "OLEDTask",       /* name of task. */
         4096,             /* Stack size */
-        NULL, 4,          /* Lowest Priority out of all 3 tasks */
+        NULL, 
+        2,          /* Lowest Priority out of all 3 tasks */
         &OLEDTaskHandler, /* Task handle to keep track of created task */
-        1);               /* pin task to core 0 */
+        1);               /* pin task to core 1 */
     vTaskDelay(pdMS_TO_TICKS(1000));
 }
 

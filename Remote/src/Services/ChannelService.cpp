@@ -4,6 +4,7 @@
 
 #include "Handlers/OLEDHandler.h"
 #include "Handlers/RadioHandler.h"
+#include "Algos/RotaryEncoder.h"
 #include "System.h"
 
 ChannelServiceStatus channelServiceStatus = {
@@ -13,6 +14,7 @@ ChannelServiceStatus channelServiceStatus = {
 // Channel Selection Tas
 
 void SelectChannelService_Init() {
+    rotaryEncoder_Init();
     pinMode(SELECTION_PIN, INPUT_PULLUP);
 }
 
