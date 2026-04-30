@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <FreeRTOS.h>
 
-#include "Algos/ADC.h"
+#include "Algos/Battery.h"
 #include "Handlers/OLEDHandler.h"
 #include "Handlers/RadioHandler.h"
 #include "Services/ChannelService.h"
@@ -27,9 +27,7 @@ SystemData data = {
     .heartbeatCount = 0,
     .uptimeSeconds = 0,
     .OLEDActive = false,
-    .potChannel = 1,
-    .radioReady = false
-};
+    .radioReady = false};
 
 SystemState remoteState = STATE_BOOTING;
 
@@ -42,31 +40,40 @@ void System_Init() {
         2,           /* Medium Priority out of all 3 tasks */
         &SystemTask, /* Task handle to keep track of created task */
         0);          /* pin task to core 0 */
+
+    xTaskCreatePinnedToCore(
+        RotaryServiceLoop, 
+        "RotarySelect", 
+        2048, 
+        NULL, 
+        3, 
+        &RotaryServiceTask, 
+        0);
+    vTaskSuspend(RotaryServiceTask);
+
+    Battery_Init();
 }
 
 void SystemLoop(void* pvParameters) {
-    TickType_t prevTime = xTaskGetTickCount();
-    int adcValue = 1;
+    TickType_t xFrequency;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    int batteryMVSum = 0;
     for (;;) {
+        xFrequency = pdMS_TO_TICKS(1000);  // Exact 1s period
+        
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
         // Update uptime
-        if (xTaskGetTickCount() - prevTime >= pdMS_TO_TICKS(1000)) {  // Every 1 second
+        // if (xTaskGetTickCount() - prevTime >= pdMS_TO_TICKS(1000)) {  // Every 1 second
             data.uptimeSeconds++;
-            prevTime = xTaskGetTickCount();  // Reset prevTime to current time
-        }
-
-        // Simulate battery drain
-        data.batteryMv -= 1;  // Drain 1mv per 1/20th of a second, so 50mv per second
-
-        if (!data.channelLocked) {
-            ADC_Read(&adcValue);
-            if (adcValue != data.potChannel) {
-                data.potChannel = adcValue;
+            for(int i = 0; i < 3; i++) {  // Average over 3 readings for stability
+                batteryMVSum += returnMillivolts();
+                vTaskDelay(pdMS_TO_TICKS(10));  // Small delay between readings
             }
-            // Serial.println(state.potChannel);
-        }
+            data.batteryMv = batteryMVSum / 3;  // Calculate average
+            batteryMVSum = 0;  // Reset sum for next round
+            Serial.println("mV: " + String(data.batteryMv));
+        // }
 
-        // Update ADC channel
-        vTaskDelay(pdMS_TO_TICKS(5));  // Delay for 5 ms: 20hz
     }
 }
 
@@ -80,11 +87,11 @@ void transitionTo(SystemState newState) {
             break;
         case STATE_SELECTING_CHANNEL:
             SelectChannelService_Init();
-            xTaskCreatePinnedToCore(RotaryServiceLoop, "RotarySelect", 2048, NULL, 3, &RotaryServiceTask, 0);
+            vTaskResume(RotaryServiceTask);
             xTaskCreatePinnedToCore(SelectChannelServiceLoop, "ChannelSelect", 4096, NULL, 3, &SelectChannelServiceTask, 1);
             break;
         case STATE_HANDSHAKING:
-            vTaskDelete(&RotaryServiceTask);
+            vTaskSuspend(RotaryServiceTask);
             // Instead of an Init function that stays alive,
             // just start the task here.
             HandshakeService_Init();
@@ -92,7 +99,7 @@ void transitionTo(SystemState newState) {
             break;
 
         case STATE_OPERATIONAL:
-            vTaskDelete(&RotaryServiceTask);
+            vTaskSuspend(RotaryServiceTask);
             EStopService_Init();
             HeartbeatService_Init();
             xTaskCreatePinnedToCore(HeartbeatServiceLoop, "Heartbeat", 2048, NULL, 3, &HeartbeatServiceTask, 1);

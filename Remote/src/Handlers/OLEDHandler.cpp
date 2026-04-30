@@ -192,19 +192,18 @@ void drawHandshake() {
 
 void drawBattery() {
     // Battery Icon
-    switch (data.batteryMv) {
-        case 8800 ... 9000:
-            u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_FULL);
-            break;
-        case 8600 ... 8799:
-            u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_5BAR);
-            break;
-        case 8400 ... 8599:
-            u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_4BAR);
-            break;
-        default:
-            u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_1BAR);
-            break;
+    if(data.batteryMv >= 5500) {
+        u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_FULL);
+    } else if(data.batteryMv >= 5300) { 
+        u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_5BAR);
+    } else if(data.batteryMv >= 5100) {
+        u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_4BAR);
+    } else if(data.batteryMv >= 4900) {
+        u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_3BAR);
+    } else if(data.batteryMv >= 4700) {
+        u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_2BAR);
+    } else {
+        u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_1BAR);
     }
 }
 

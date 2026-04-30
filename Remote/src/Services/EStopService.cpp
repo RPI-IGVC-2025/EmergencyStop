@@ -25,7 +25,6 @@ void EStopServiceLoop(void* pvParameters) {
             } else {
                 EStopLowCounts = 0;
             }
-
             if (EStopLowCounts > 3) {
                 triggerEStop();
             }
@@ -33,7 +32,6 @@ void EStopServiceLoop(void* pvParameters) {
             if (xSemaphoreTake(xMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
                 if (xTaskGetTickCount() - previousTime >= pdMS_TO_TICKS(250)) {
                     buildPacket(&pkt, MessageType::ESTOP, StatusCode::BUTTON_PRESS);
-                    pkt.hash[5] = 0xAB; // Placeholder hash value for testing
                     sendPacket(&pkt);
                     Serial.println("Sent ESTOP Packet");
                 }
