@@ -1,3 +1,4 @@
+// Robot Side
 #include "HandshakeService.h"
 
 #include <Arduino.h>
@@ -20,7 +21,7 @@ void HandshakeServiceLoop(void* pvParameters) {
     TickType_t lastHandshakeSent = xTaskGetTickCount();
     int receivedChannel = 0;
     for (;;) {
-        // Serial.println("HandshakeService: Loop complete");
+        //Serial.println("HandshakeService: Loop complete");
         if (xSemaphoreTake(xMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
             // Check for received packet from Robot
             if (checkHandshakePacket(&handshakePkt)) {
@@ -32,14 +33,15 @@ void HandshakeServiceLoop(void* pvParameters) {
                 }
                 if(handshakePkt.command == MessageType::CONFIRM && confirmedHandshake){
                     secondHandshake = true;
-                    Serial.println("Received confirm packet from remote!");
+                    //Serial.println("Received confirm packet from remote!");
                 }
             }
             
-            if(confirmedHandshake && !secondHandshake && (xTaskGetTickCount() - lastHandshakeSent) > pdMS_TO_TICKS(2000)) {
+            if(confirmedHandshake && !secondHandshake && (xTaskGetTickCount() - lastHandshakeSent) > pdMS_TO_TICKS(1500)) {
+                vTaskDelay(pdMS_TO_TICKS(500));  // Short delay before responding
                 buildPacket(&pkt, MessageType::HANDSHAKE, StatusCode::OK, receivedChannel);  // Build handshake packet
                 sendPacket(&pkt);  // Send handshake packet 
-                Serial.println("Sent handshake packet to remote!");
+                //Serial.println("Sent handshake packet to remote!");
                 lastHandshakeSent = xTaskGetTickCount();
             }
 
@@ -52,16 +54,16 @@ void HandshakeServiceLoop(void* pvParameters) {
 
                 if (data.isSynced) {
                     // If we're synced, we can stop sending handshakes
-                    Serial.println("HandshakeService: Synced, ending task");
+                    //Serial.println("HandshakeService: Synced, ending task");
                     xSemaphoreGive(xMutex);  // ALWAYS give it back!
                     transitionTo(STATE_OPERATIONAL);
                     vTaskDelete(NULL);  // Delete this task
                 }
             }
 
-            Serial.println("0");
+            //Serial.println("0");
             xSemaphoreGive(xMutex);         // ALWAYS give it back!
-            vTaskDelay(pdMS_TO_TICKS(50));  // Delay for 100ms to prevent task hogging
+            vTaskDelay(pdMS_TO_TICKS(10));  // Delay for 100ms to prevent task hogging
         }
     }
 }

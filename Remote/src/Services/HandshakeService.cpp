@@ -1,3 +1,4 @@
+// Remote Side
 #include "HandshakeService.h"
 
 #include <Arduino.h>
@@ -47,7 +48,7 @@ void HandshakeServiceLoop(void* pvParameters) {
             if (xTaskGetTickCount() - lastHandshakeSent >= pdMS_TO_TICKS(2000)) {
                 vTaskDelay(pdMS_TO_TICKS(100));
                 Serial.println("Sent handshake packet");
-                // Send a handshake packet every 1 second
+                // Send a handshake packet every 2 seconds
                 buildPacket(&handshakePkt, MessageType::HANDSHAKE, StatusCode::OK, desiredChannel);
                 sendPacket(&handshakePkt);
                 lastHandshakeSent = xTaskGetTickCount();
@@ -58,10 +59,89 @@ void HandshakeServiceLoop(void* pvParameters) {
             //Serial.println("Loop complete");
         }
 
-        vTaskDelay(pdMS_TO_TICKS(50));  // Delay for 50ms to prevent task hogging
+        vTaskDelay(pdMS_TO_TICKS(10));  // Delay for 50ms to prevent task hogging
     }
 }
 
+// HardwareSerial HC121 = getHC12();
+
+// void HandshakeServiceLoop(void* pvParameters) {
+//     Serial.println("Handshake task begin!");
+//     Packet pkt, handshakePkt;
+//     TickType_t lastHandshakeSent = xTaskGetTickCount();
+//     uint16_t desiredChannel = getDesiredChannel();
+//     bool waitingForAck = false;
+//     TickType_t ackDeadline = 0;
+
+//     for (;;) {
+//         if (xSemaphoreTake(xMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+
+//             // --- LISTENING PHASE ---
+//             // If we just sent a packet, enter a dedicated listen window
+//             // and DO NOT retransmit during this window
+//             if (waitingForAck) {
+//                 if (checkIncomingPacket(&pkt)) {
+//                     // Got the ACK - send CONFIRM and finish
+//                     Serial.println("Received ACK - sending CONFIRM");
+//                     vTaskDelay(pdMS_TO_TICKS(200)); // let robot settle
+//                     buildPacket(&handshakePkt, MessageType::CONFIRM, 
+//                                StatusCode::OK, pkt.channel);
+//                     sendPacket(&handshakePkt);
+                    
+//                     // Wait for CONFIRM to fully transmit before switching
+//                     vTaskDelay(pdMS_TO_TICKS(200));
+                    
+//                     for (; !HC12switchChannel(pkt.channel);) {}
+//                     data.isSynced = true;
+//                     xSemaphoreGive(xMutex);
+//                     vTaskDelay(pdMS_TO_TICKS(7500));
+//                     continue;
+//                 }
+
+//                 // Check if our listen window expired without an ACK
+//                 if (xTaskGetTickCount() > ackDeadline) {
+//                     Serial.println("ACK timeout - will retransmit");
+//                     // Flush stale bytes before retrying
+//                     while (HC121.available()) HC121.read();
+//                     waitingForAck = false;
+//                     // Force immediate retransmit on next iteration
+//                     lastHandshakeSent = xTaskGetTickCount() - pdMS_TO_TICKS(2000);
+//                 }
+
+//                 xSemaphoreGive(xMutex);
+//                 vTaskDelay(pdMS_TO_TICKS(10));
+//                 continue; // Skip transmit section entirely while waiting
+//             }
+
+//             // --- TRANSMIT PHASE ---
+//             // Only reached if we are NOT currently waiting for an ACK
+//             if (data.isSynced) {
+//                 setCurrentChannel(getDesiredChannel());
+//                 transitionTo(STATE_OPERATIONAL);
+//                 xSemaphoreGive(xMutex);
+//                 vTaskDelete(NULL);
+//             }
+
+//             if (xTaskGetTickCount() - lastHandshakeSent >= pdMS_TO_TICKS(2000)) {
+//                 // Flush before transmitting
+//                 while (HC121.available()) HC121.read();
+                
+//                 Serial.println("Sending HANDSHAKE");
+//                 buildPacket(&handshakePkt, MessageType::HANDSHAKE, 
+//                            StatusCode::OK, desiredChannel);
+//                 sendPacket(&handshakePkt);
+//                 lastHandshakeSent = xTaskGetTickCount();
+                
+//                 // Enter listen window - 1500ms to receive ACK before giving up
+//                 waitingForAck = true;
+//                 ackDeadline = xTaskGetTickCount() + pdMS_TO_TICKS(1500);
+//             }
+
+//             xSemaphoreGive(xMutex);
+//         }
+//         vTaskDelay(pdMS_TO_TICKS(10));
+//     }
+// }
 
 bool checkIncomingPacket(Packet* pkt) {
     if(!getNextFrame(pkt)) return false;

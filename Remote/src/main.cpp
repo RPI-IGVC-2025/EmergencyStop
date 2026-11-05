@@ -16,6 +16,7 @@ void setup() {
     Radio_Init();
     
     transitionTo(STATE_SELECTING_CHANNEL);
+    Serial.println("System Initialized, entering main loop");
 }
 
 void loop() {

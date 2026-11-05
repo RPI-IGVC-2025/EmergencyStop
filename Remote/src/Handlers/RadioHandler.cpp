@@ -1,3 +1,4 @@
+// Remote Side
 #include "RadioHandler.h"
 
 #include <Arduino.h>
@@ -8,10 +9,10 @@
 
 HardwareSerial HC12(1);
 
-const int hc12_rx = 18;
-const int hc12_tx = 17;
+const int hc12_rx = 1;
+const int hc12_tx = 2;
 
-const int SET_PIN = 5;
+const int SET_PIN = 21;
 
 RadioState radioState = {.desiredChannel = 1, .currentChannel = 1};
 
@@ -25,13 +26,18 @@ void Radio_Init() {
         Serial.println("Failed to set HC12 to default settings. Retrying...");
         delay(300);
     }  // Default to channel 1 on startup
+    HC12setFU1();
     data.radioReady = true;
+    // After Radio_Init() completes, query current settings
+    HC12sendCommand("AT+RX");
+
+  
 
     // HC12.onReceive([]() {
     //     // We use the internal UART functions to check for errors
     //     size_t available = HC12.available();
-        
-    //     // This is a bit advanced, but if the UART hardware detects 
+
+    //     // This is a bit advanced, but if the UART hardware detects
     //     // a framing error, it often results in a "0" or "Break" condition.
     //     if (HC12.peek() == -1 && available > 0) {
     //         Serial.println("!!! UART HARDWARE ERROR DETECTED !!!");
@@ -49,6 +55,7 @@ void flushHC12() {
 bool getNextFrame(Packet* outPkt) {
     // 1. Bail immediately if there's no data at all
     if (HC12.available() == 0) {
+        Serial.println("No data available");
         return false;
     }
 
@@ -56,25 +63,33 @@ bool getNextFrame(Packet* outPkt) {
     // Notice this is a WHILE loop, and it doesn't care about sizeof(Packet)
     while (HC12.available() > 0 && HC12.peek() != SYNC_BYTE) {
         Serial.println("R!");
-        HC12.read(); // Throw it away
+        HC12.read();  // Throw it away
     }
 
-    vTaskDelay(pdMS_TO_TICKS(100)); // Short delay to allow the rest of the packet to arrive after the sync byte
+    // ADD THIS BLOCK
+    Serial.print("Bytes available after sync hunt: ");
+    Serial.println(HC12.available());
+    uint32_t waitStart = millis();
+    while (HC12.available() < (int)sizeof(Packet) && millis() - waitStart < 200) {
+        vTaskDelay(pdMS_TO_TICKS(1));
+    }
+    Serial.print("Bytes available after 200ms wait: ");
+    Serial.println(HC12.available());
 
     // 3. Check what's left. If we burned the trash and don't have a full packet yet, wait.
     if (HC12.available() < sizeof(Packet)) {
-        // It's completely normal to hit this. It means the packet is 
+        // It's completely normal to hit this. It means the packet is
         // literally flying through the air right now and we are waiting for the rest of it.
-        return false; 
+        return false;
     }
 
-    // 4. If we reach here, we GUARANTEE the first byte is SYNC_BYTE 
+    // 4. If we reach here, we GUARANTEE the first byte is SYNC_BYTE
     // AND we have exactly enough bytes to pull a full packet.
     uint8_t tempBuf[sizeof(Packet)];
     HC12.readBytes(tempBuf, sizeof(Packet));
 
     Serial.println("PACKET: ");
-    for(int i = 0; i < sizeof(Packet); i++) {
+    for (int i = 0; i < sizeof(Packet); i++) {
         Serial.print(tempBuf[i]);
         Serial.print(", ");
     }
@@ -90,80 +105,11 @@ bool getNextFrame(Packet* outPkt) {
     return true;
 }
 
-// bool getNextFrame(Packet* outPkt) {
-//     Serial.println("Check");
-//     // If there aren't even enough bytes for a full packet, bail immediately
-//     if (HC12.available() == 0) {
-//         Serial.println("1");
-//         return false;
-//     }
-
-//     // Hunt for SyncbyteZ
-//     if (HC12.available() >= sizeof(Packet) && HC12.peek() != SYNC_BYTE) {
-//         Serial.println("No Sync Byte");
-//         HC12.read();
-//     }
-
-//     if(HC12.available() < sizeof(Packet)) {
-//         Serial.println(HC12.available());
-//         Serial.println("Not enough bytes");
-//         return false;
-//     }
-
-//     uint8_t tempBuf[sizeof(Packet)];
-//     int bytesRead = HC12.readBytes(tempBuf, sizeof(Packet));
-
-//     for(int i = 0; i < sizeof(Packet); i++) {
-//         Serial.print(tempBuf[i]);
-//         Serial.print(", ");
-//     }
-//     Serial.println();
-
-//     if(bytesRead > sizeof(Packet)) {
-//         Serial.println("Overflow");
-//         return false;
-//     }
-
-//     // Verify footer
-//     if (tempBuf[sizeof(Packet) - 1] != FOOT_BYTE) {
-//         return false;
-//     }
-
-//     memcpy(outPkt, tempBuf, sizeof(Packet));
-//     return true;
-// }
-
-// bool getNextFrame(Packet* outPkt) {
-//     // If there aren't even enough bytes for a full packet, bail immediately
-//     if (HC12.available() < sizeof(Packet)) {
-//         return false;
-//     }
-
-//     // Hunt for Syncbyte
-//     if (HC12.peek() != SYNC_BYTE) {
-//         HC12.read();
-//         return false;
-//     }
-
-//     // Read the frame
-//     uint8_t tempBuf[sizeof(Packet)];
-//     HC12.readBytes(tempBuf, sizeof(Packet));
-
-//     // Verify footer
-//     if (tempBuf[sizeof(Packet) - 1] != FOOT_BYTE) {
-//         return false;
-//     }
-
-//     memcpy(outPkt, tempBuf, sizeof(Packet));
-//     return true;
-// }
-
-
 void sendPacket(Packet* pkt) {
     uint8_t buffer[sizeof(Packet)];
     memcpy(buffer, pkt, sizeof(Packet));
 
-    for(int i = 0; i<sizeof(Packet); i++) {
+    for (int i = 0; i < sizeof(Packet); i++) {
         Serial.print(buffer[i]);
         Serial.print(", ");
     }
@@ -235,3 +181,12 @@ void setDesiredChannel(uint8_t newChannel) {
 }
 
 uint8_t getDesiredChannel() { return radioState.desiredChannel; }
+
+bool HC12setFU1() {
+    char command[] = "AT+FU1";
+    char* response = HC12sendCommand(command);
+    if (memcmp(response, "OK+FU1", 6) == 0) {
+        return true;
+    }
+    return false;
+}

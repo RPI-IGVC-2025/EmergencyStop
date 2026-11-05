@@ -14,10 +14,11 @@ typedef struct __attribute__((packed)) Packet {
   uint8_t command;   // ESTOP, etc.
   uint32_t seqNum;   // The raw sequence count
   uint32_t nonce;    // Your 10*x logic value
-  uint8_t hash[32];  // BLAKE2s output of (command + seq + nonce)
+  uint8_t hash[4];  // BLAKE2s output of (command + seq + nonce)
   uint8_t status;    // Used for diagnostics (0x00 = OK, 0x01 = Button Press, 0x02 = Heartbeat failure, 0x03 = HC-12 Failure, etc.)'
   uint8_t ownerID;   // The ID of the sender (0x01 for remote, 0x02 for robot)
   uint8_t channel;   // The channel the for a handshake.
+  //uint8_t padding[10]; // Padding to make the struct size a multiple of 4 bytes
   uint8_t footByte; // A constant value to indicate the end of a packet
 } Packet;
 

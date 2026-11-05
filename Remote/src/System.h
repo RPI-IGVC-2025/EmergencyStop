@@ -3,9 +3,9 @@
 #include <Arduino.h>
 #include <FreeRTOS.h>
 
-const int ESTOP_PIN = 7;
+const int ESTOP_PIN = 10;
 const int SELECTION_PIN = 6;
-const int BATTERY_PIN = 4;
+const int BATTERY_PIN = 9;
 
 void System_Init();
 void SystemLoop(void* pvParameters);

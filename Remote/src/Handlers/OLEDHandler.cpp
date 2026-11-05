@@ -6,16 +6,15 @@
 #include <Wire.h>
 #include <task.h>
 
+#include "Algos/RotaryEncoder.h"
 #include "RadioHandler.h"
 #include "Services/ChannelService.h"
 #include "System.h"
 
-#include "Algos/RotaryEncoder.h"
-
 void OLEDTask(void* pvParameters);
 
-const int SDA_PIN = 1;
-const int SCL_PIN = 2;
+const int SDA_PIN = 7;
+const int SCL_PIN = 6;
 
 volatile bool OLEDup = false;
 
@@ -32,15 +31,15 @@ OLEDState oledState = {.channelSelectionActive = true,
                        .updateDelayMS = 1000};
 
 void OLED_Init() {
-    Wire.setClock(400000);  // Boost to 400kHz
     u8g2.begin();
+    // Wire.setClock(400000);  // Boost to 400kHz
 
     xTaskCreatePinnedToCore(
-        OLEDTask,         /* Task function. */
-        "OLEDTask",       /* name of task. */
-        4096,             /* Stack size */
-        NULL, 
-        2,          /* Lowest Priority out of all 3 tasks */
+        OLEDTask,   /* Task function. */
+        "OLEDTask", /* name of task. */
+        4096,       /* Stack size */
+        NULL,
+        2,                /* Lowest Priority out of all 3 tasks */
         &OLEDTaskHandler, /* Task handle to keep track of created task */
         1);               /* pin task to core 1 */
     vTaskDelay(pdMS_TO_TICKS(1000));
@@ -161,7 +160,11 @@ void drawHeartbeat() {
         u8g2.drawStr(80, 29, "Heartbeat");
         u8g2.drawXBMP(95, 35, 15, 13, IMAGE_HEART);
         u8g2.setFont(u8g2_font_6x12_tr);
-        u8g2.drawStr(100 - (3*(floor(log10(data.heartbeatCount)))), 60, formatNumber(data.heartbeatCount));
+        if (data.heartbeatCount == 0) {
+            u8g2.drawStr(100, 60, formatNumber(data.heartbeatCount));
+        } else {
+            u8g2.drawStr(100 - (3 * (floor(log10(data.heartbeatCount)))), 60, formatNumber(data.heartbeatCount));
+        }
     }
 }
 
@@ -192,15 +195,15 @@ void drawHandshake() {
 
 void drawBattery() {
     // Battery Icon
-    if(data.batteryMv >= 5500) {
+    if (data.batteryMv >= 5500) {
         u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_FULL);
-    } else if(data.batteryMv >= 5300) { 
+    } else if (data.batteryMv >= 5300) {
         u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_5BAR);
-    } else if(data.batteryMv >= 5100) {
+    } else if (data.batteryMv >= 5100) {
         u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_4BAR);
-    } else if(data.batteryMv >= 4900) {
+    } else if (data.batteryMv >= 4900) {
         u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_3BAR);
-    } else if(data.batteryMv >= 4700) {
+    } else if (data.batteryMv >= 4700) {
         u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_2BAR);
     } else {
         u8g2.drawXBMP(100, 2, 24, 16, IMAGE_BATTERY_1BAR);

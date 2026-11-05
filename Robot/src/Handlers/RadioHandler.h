@@ -1,3 +1,4 @@
+// Robot Side
 #ifndef RADIOHANDLER_H
 #define RADIOHANDLER_H
 #include <Arduino.h>
@@ -19,5 +20,7 @@ void setDesiredChannel(uint16_t newChannel);
 
 void sendPacket(Packet* pkt);
 void clearPacket(Packet* pkt);
+
+bool HC12setFU1();
 
 #endif

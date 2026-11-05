@@ -1,3 +1,4 @@
+// Remote Side
 #ifndef RADIOHANDLER_H
 #define RADIOHANDLER_H
 #include <Arduino.h>
@@ -23,5 +24,7 @@ void sendPacket(Packet* pkt);
 void clearPacket(Packet* pkt);
 
 void flushHC12();
+
+bool HC12setFU1();
 
 #endif

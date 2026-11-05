@@ -1,3 +1,4 @@
+// Robot Side
 #include "RadioHandler.h"
 
 #include <Arduino.h>
@@ -18,16 +19,19 @@ RadioState radioState = {
     .currentChannel = 1};
 
 void Radio_Init() {
+    HC12.setRxBufferSize(1024);
     HC12.begin(9600, SERIAL_8N1, hc12_rx, hc12_tx);
     pinMode(SET_PIN, OUTPUT);
     digitalWrite(SET_PIN, HIGH);
     delay(1000);  // Wait for HC12 to initialize
     while (!HC12setDefault()) {
-        Serial.println("Failed to set HC12 to default settings. Retrying...");
+        //Serial.println("Failed to set HC12 to default settings. Retrying...");
         delay(300);
     }  // Default to channel 1 on startup
+    HC12setFU1();
     data.radioReady = true;
     resetNonces();
+    HC12sendCommand("AT+RX");
 }
 
 bool getNextFrame(Packet* outPkt) {
@@ -56,7 +60,7 @@ bool getNextFrame(Packet* outPkt) {
 
     // 5. Verify footer
     if (tempBuf[sizeof(Packet) - 1] != FOOT_BYTE) {
-        Serial.println("Alignment lost - Footer mismatch");
+        //Serial.println("Alignment lost - Footer mismatch");
         return false;
     }
 
@@ -64,18 +68,38 @@ bool getNextFrame(Packet* outPkt) {
     return true;
 }
 
+// void sendPacket(Packet* pkt) {
+//     uint8_t buffer[sizeof(Packet)];
+//     memcpy(buffer, pkt, sizeof(Packet));
+
+//     for (int i = 0; i < sizeof(Packet); i++) {
+//         Serial.print(buffer[i]);
+//         Serial.print(",");
+//     }
+//     Serial.println();
+
+//     HC12.write(buffer, sizeof(Packet));
+
+//     clearPacket(pkt);
+// }
+
 void sendPacket(Packet* pkt) {
     uint8_t buffer[sizeof(Packet)];
     memcpy(buffer, pkt, sizeof(Packet));
-
+    
+    Serial.print("SENDING (");
+    Serial.print(sizeof(Packet));
+    Serial.print(" bytes): ");
     for (int i = 0; i < sizeof(Packet); i++) {
         Serial.print(buffer[i]);
         Serial.print(",");
     }
     Serial.println();
-
-    HC12.write(buffer, sizeof(Packet));
-
+    
+    size_t written = HC12.write(buffer, sizeof(Packet));
+    Serial.print("HC12.write returned: ");
+    Serial.println(written);  // <-- THIS IS THE KEY NUMBER
+    
     clearPacket(pkt);
 }
 
@@ -140,4 +164,22 @@ uint16_t getCurrentChannel() {
 
 void setDesiredChannel(uint16_t newChannel) {
     radioState.desiredChannel = newChannel;
+}
+
+bool HC12setFU1() {
+    char command[] = "AT+FU1";
+    char* response = HC12sendCommand(command);
+    if (memcmp(response, "OK+FU1", 6) == 0) {
+        return true;
+    }
+    return false;
+}
+
+bool HC12setB4800() {
+    char command[] = "AT+B4800";
+    char* response = HC12sendCommand(command);
+    if (memcmp(response, "OK+B4800", 9) == 0) {
+        return true;
+    }
+    return false;
 }

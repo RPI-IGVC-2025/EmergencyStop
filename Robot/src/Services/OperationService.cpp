@@ -23,18 +23,18 @@ void OperationServiceLoop(void* pvParameters) {
                 uint8_t buffer[sizeof(Packet)];
                 memcpy(buffer, &pkt, sizeof(Packet));
 
-                for (int i = 0; i < sizeof(Packet); i++) {
-                    Serial.print(buffer[i]);
-                    Serial.print(", ");
-                }
-                Serial.println();
+                // for (int i = 0; i < sizeof(Packet); i++) {
+                //     Serial.print(buffer[i]);
+                //     Serial.print(", ");
+                // }
+                // Serial.println();
 
                 if (pkt.command == MessageType::ESTOP) {
-                    Serial.println("RECIEVED ESTOP PACKET!");
+                    //Serial.println("RECIEVED ESTOP PACKET!");
                     triggerEStop();
                 }
                 if (pkt.command == MessageType::HEARTBEAT) {
-                    Serial.println("Received Heartbeat Packet!");
+                    //Serial.println("Received Heartbeat Packet!");
                     updateLastHeartbeatTime(xTaskGetTickCount());
                     setHeartbeatActive();
                 }
@@ -68,12 +68,12 @@ uint8_t EStopVote = 0;
 
 void swissCheeseCheck(Packet* pkt, bool hashValid) {
     if (!hashValid) {
-        Serial.println("Boolean works!");
+        //Serial.println("Boolean works!");
         if (pkt->command == MessageType::ESTOP) {
             EStopVote++;
             Serial.println(EStopVote);
             if (EStopVote >= 2) {
-                Serial.println("Swiss Cheese Check Failed: Multiple ESTOP Packets with Invalid Hash");
+                //Serial.println("Swiss Cheese Check Failed: Multiple ESTOP Packets with Invalid Hash");
                 triggerEStop();
             }
         }
@@ -85,7 +85,7 @@ void swissCheeseCheck(Packet* pkt, bool hashValid) {
 void checkHeartbeatTimeout() {
     TickType_t currentTime = xTaskGetTickCount();
     if (currentTime - getLastHeartbeatTime() > pdMS_TO_TICKS(5000)) {
-        Serial.println("Heartbeat Timeout!");
+        //Serial.println("Heartbeat Timeout!");
         triggerEStop();
     }
 }

@@ -61,10 +61,10 @@ bool verifyNonce(Packet* pkt) {
 }
 
 bool verifyHash(Packet* pkt) {
-    uint8_t recievedHash[32];
-    memcpy(recievedHash, pkt->hash, 32);
+    uint8_t recievedHash[sizeof(pkt->hash)];
+    memcpy(recievedHash, pkt->hash, sizeof(pkt->hash));
 
-    memset(pkt->hash, 0, 32);  // Clear the hash field for recomputation
+    memset(pkt->hash, 0, sizeof(pkt->hash));  // Clear the hash field for recomputation
 
     // Reconstruct the data that was hashed: command + seqNum + nonce
     generateBLAKE(pkt);
@@ -72,7 +72,7 @@ bool verifyHash(Packet* pkt) {
     // Compute the BLAKE2s hash of the reconstructed data
 
     // Compare the computed hash with the hash in the packet
-    if (memcmp(recievedHash, pkt->hash, 32) == 0) {
+    if (memcmp(recievedHash, pkt->hash, sizeof(pkt->hash)) == 0) {
         currentHashValid = true;
     } else {
         Serial.println("Hash verification failed");

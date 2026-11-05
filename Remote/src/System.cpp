@@ -3,6 +3,9 @@
 #include <Arduino.h>
 #include <FreeRTOS.h>
 
+#include "WiFi.h"
+#include "BluetoothSerial.h"
+
 #include "Algos/Battery.h"
 #include "Handlers/OLEDHandler.h"
 #include "Handlers/RadioHandler.h"
@@ -32,6 +35,9 @@ SystemData data = {
 SystemState remoteState = STATE_BOOTING;
 
 void System_Init() {
+    WiFi.mode(WIFI_OFF);
+    btStop();
+
     xTaskCreatePinnedToCore(
         SystemLoop,   /* Task function. */
         "SystemTask", /* name of task. */
@@ -71,7 +77,7 @@ void SystemLoop(void* pvParameters) {
             }
             data.batteryMv = batteryMVSum / 3;  // Calculate average
             batteryMVSum = 0;  // Reset sum for next round
-            Serial.println("mV: " + String(data.batteryMv));
+            //Serial.println("mV: " + String(data.batteryMv));
         // }
 
     }
