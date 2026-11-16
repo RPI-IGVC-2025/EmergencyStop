@@ -3,8 +3,8 @@
 #include <Arduino.h>
 #include <FreeRTOS.h>
 
-const int ESTOP_PIN = 10;
-const int SELECTION_PIN = 6;
+const int ESTOP_PIN = 15;
+const int SELECTION_PIN = 17;
 const int BATTERY_PIN = 9;
 
 void System_Init();

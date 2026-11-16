@@ -4,6 +4,7 @@
 
 #include "Services/HandshakeService.h"
 #include "Services/OperationService.h"
+#include "Handlers/LEDHandler.h"
 
 static TaskHandle_t SystemTask;
 
@@ -31,8 +32,9 @@ void System_Init() {
         &SystemTask,     /* Task handle to keep track of created task */
         1);              /* pin task to core 0 */
 
+    LED_Init();
     pinMode(ESTOP_PIN, OUTPUT);
-    digitalWrite(ESTOP_PIN, LOW); // Ensure E-Stop pin is LOW at startup
+    digitalWrite(ESTOP_PIN, HIGH); // Ensure E-Stop pin is LOW at startup
 }
 
 void SystemLoop(void* pvParameters) {

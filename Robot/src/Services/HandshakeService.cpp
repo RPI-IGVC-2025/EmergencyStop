@@ -7,6 +7,7 @@
 
 #include "Algos/Auth.h"
 #include "Handlers/RadioHandler.h"
+#include "Handlers/LEDHandler.h"
 #include "System.h"
 
 void HandshakeService_Init() {
@@ -15,6 +16,7 @@ void HandshakeService_Init() {
 // Add logic for a remote response
 
 void HandshakeServiceLoop(void* pvParameters) {
+    toggleConnectedLED(false);
     bool confirmedHandshake = false;
     bool secondHandshake = false;
     Packet pkt, handshakePkt;
@@ -55,6 +57,7 @@ void HandshakeServiceLoop(void* pvParameters) {
                 if (data.isSynced) {
                     // If we're synced, we can stop sending handshakes
                     //Serial.println("HandshakeService: Synced, ending task");
+                    toggleConnectedLED(true);
                     xSemaphoreGive(xMutex);  // ALWAYS give it back!
                     transitionTo(STATE_OPERATIONAL);
                     vTaskDelete(NULL);  // Delete this task

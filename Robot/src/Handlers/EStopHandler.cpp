@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 
+#include "Handlers/LEDHandler.h"
 #include "System.h"
 
 void triggerEStop() {
@@ -9,6 +10,7 @@ void triggerEStop() {
         //Serial.println("E-STOP TRIGGERED!");
     //     delay(10);
     // }
-    digitalWrite(ESTOP_PIN, HIGH); // Set E-Stop pin HIGH to trigger E-Stop
+    setEstopLED(true);
+    digitalWrite(ESTOP_PIN, LOW); // Set E-Stop pin LOW to trigger E-Stop
     transitionTo(STATE_ESTOP_ACTIVE);
 }

@@ -9,8 +9,8 @@
 
 HardwareSerial HC12(1);
 
-const int hc12_rx = 1;
-const int hc12_tx = 2;
+const int hc12_rx = 2;
+const int hc12_tx = 1;
 
 const int SET_PIN = 21;
 

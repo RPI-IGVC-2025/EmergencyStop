@@ -30,11 +30,11 @@ void OperationServiceLoop(void* pvParameters) {
                 // Serial.println();
 
                 if (pkt.command == MessageType::ESTOP) {
-                    //Serial.println("RECIEVED ESTOP PACKET!");
+                    Serial.println("RECIEVED ESTOP PACKET!");
                     triggerEStop();
                 }
                 if (pkt.command == MessageType::HEARTBEAT) {
-                    //Serial.println("Received Heartbeat Packet!");
+                    Serial.println("Received Heartbeat Packet!");
                     updateLastHeartbeatTime(xTaskGetTickCount());
                     setHeartbeatActive();
                 }
